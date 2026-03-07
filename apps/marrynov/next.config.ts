@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
 
@@ -11,6 +12,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
+  },
+  // Turbopack : indiquer la racine du monorepo pour la résolution des modules
+  turbopack: {
+    root: path.join(__dirname, "../.."),
   },
 };
 
@@ -25,5 +30,4 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   telemetry: false,
   // Pas d'overlay d'erreur Sentry en dev (on garde Next.js natif)
   disableLogger: true,
-  hideSourceMaps: true,
 });
