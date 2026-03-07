@@ -1,0 +1,50 @@
+name: Demande de fonctionnalité
+description: Proposer une nouvelle fonctionnalité ou amélioration
+title: "feat: [DESCRIPTION COURTE]"
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: projet
+    attributes:
+      label: Projet concerné
+      options:
+        - template-pizza
+        - template-coiffure
+        - template-restaurant
+        - template-location-voiture
+        - site-marrynov
+        - packages/ui
+        - packages/database
+        - Transversal (tous les projets)
+    validations:
+      required: true
+
+  - type: textarea
+    id: probleme
+    attributes:
+      label: Quel problème cette fonctionnalité résout-elle ?
+      description: Décris le contexte ou la frustration actuelle.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+      description: Décris ce que tu souhaites voir implémenté.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+    validations:
+      required: false
+
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Contexte supplémentaire
+    validations:
+      required: false

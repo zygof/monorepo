@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #6b40a0;
+  --color-primary-light: #f8f6fc;
+  --color-primary-lighter: #f3effa;
+  --color-primary-dark: #7f13ec;
+  --color-accent: #e67e22;
+  --color-accent-hover: #f27f0d;
+  --color-dark: #2c3e50;
+  --color-dark-deep: #0f172a;
+  --color-body: #475569;
+  --color-muted: #64748b;
+  --color-light-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-bg: #f7f6f8;
+  --color-bg-white: #ffffff;
+  --color-bg-light: #f8fafc;
+  --color-footer: #2c3e50;
+  --color-footer-text: #cbd5e1;
+  --color-footer-muted: #64748b;
+  --color-footer-social: #334155;
+  --color-success: #22c55e;
+}
+
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-lighter: var(--color-primary-lighter);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-dark: var(--color-dark);
+  --color-dark-deep: var(--color-dark-deep);
+  --color-body: var(--color-body);
+  --color-muted: var(--color-muted);
+  --color-light-muted: var(--color-light-muted);
+  --color-border: var(--color-border);
+  --color-bg: var(--color-bg);
+  --color-bg-white: var(--color-bg-white);
+  --color-bg-light: var(--color-bg-light);
+  --color-footer: var(--color-footer);
+  --color-footer-text: var(--color-footer-text);
+  --color-footer-muted: var(--color-footer-muted);
+  --color-footer-social: var(--color-footer-social);
+  --color-success: var(--color-success);
+
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-body);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-10px) rotate(-1deg);
+  }
+  75% {
+    transform: translateY(-30px) translateX(6px) rotate(0.5deg);
+  }
+}
+
+.animate-float {
+  animation: float ease-in-out infinite;
+}
+
+@keyframes float-vertical {
+  0% {
+    transform: translateY(160px);
+  }
+  50% {
+    transform: translateY(-160px);
+  }
+  100% {
+    transform: translateY(160px);
+  }
+}
+
+.animate-float-vertical {
+  animation: float-vertical ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

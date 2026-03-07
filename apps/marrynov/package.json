@@ -1,0 +1,42 @@
+{
+  "name": "@marrynov/site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\""
+  },
+  "dependencies": {
+    "@sentry/nextjs": "^10.42.0",
+    "lucide-react": "^0.564.0",
+    "next": "16.1.6",
+    "next-intl": "^4.8.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@marrynov/config-eslint": "workspace:*",
+    "@marrynov/config-typescript": "workspace:*",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "16.1.6",
+    "prettier": "^3.0.0",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^1.0.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@marrynov/design-tokens",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.css",
+    "./tokens": "./src/tokens.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@marrynov/config-typescript": "workspace:*",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0"
+  }
+}

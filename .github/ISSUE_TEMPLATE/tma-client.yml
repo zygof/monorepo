@@ -1,0 +1,76 @@
+name: Ticket TMA Client
+description: Demande de maintenance ou d'évolution pour un client existant
+title: "tma([CLIENT]): [DESCRIPTION COURTE]"
+labels: ["tma", "client"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ticket de Tierce Maintenance Applicative. Lier ce ticket à la fiche client dans Notion et au projet Linear correspondant.
+
+  - type: input
+    id: client
+    attributes:
+      label: Nom du client
+      placeholder: ex. Pizzeria du Port
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type de demande
+      options:
+        - Correction de bug
+        - Évolution fonctionnelle
+        - Mise à jour de contenu
+        - Performance
+        - Sécurité
+        - Autre
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priorite
+    attributes:
+      label: Priorité
+      options:
+        - Critique (site cassé)
+        - Haute (impact client visible)
+        - Normale
+        - Basse (amélioration cosmétique)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description de la demande
+      description: Décris précisément ce qui est demandé.
+    validations:
+      required: true
+
+  - type: input
+    id: linear
+    attributes:
+      label: ID ticket Linear
+      placeholder: ex. MAR-42
+    validations:
+      required: false
+
+  - type: input
+    id: notion
+    attributes:
+      label: Lien fiche client Notion
+    validations:
+      required: false
+
+  - type: textarea
+    id: livraison
+    attributes:
+      label: Critères de validation / Definition of Done
+      placeholder: |
+        - [ ] La modification est visible en production
+        - [ ] Le client a validé
+    validations:
+      required: false

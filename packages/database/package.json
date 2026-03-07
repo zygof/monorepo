@@ -1,0 +1,27 @@
+{
+  "name": "@marrynov/database",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "@marrynov/config-eslint": "workspace:*",
+    "@marrynov/config-typescript": "workspace:*",
+    "eslint": "^8.57.0",
+    "prisma": "^5.0.0",
+    "typescript": "^5.5.0"
+  }
+}

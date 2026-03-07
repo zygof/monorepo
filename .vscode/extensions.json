@@ -1,0 +1,34 @@
+{
+  "recommendations": [
+    // TypeScript & JavaScript
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+
+    // Next.js / React
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "steoates.autoimport",
+
+    // Qualité de code
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-french",
+    "usernamehw.errorlens",
+    "wix.vscode-import-cost",
+
+    // Git & collaboration
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "github.vscode-pull-request-github",
+
+    // Prisma
+    "prisma.prisma",
+
+    // Utilitaires
+    "mikestead.dotenv",
+    "humao.rest-client",
+    "ms-vscode-remote.remote-wsl",
+    "christian-kohler.path-intellisense",
+    "wayou.vscode-todo-highlight"
+  ]
+}

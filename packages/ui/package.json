@@ -1,0 +1,24 @@
+{
+  "name": "@marrynov/ui",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles": "./src/styles/globals.css"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@marrynov/config-eslint": "workspace:*",
+    "@marrynov/config-typescript": "workspace:*",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}

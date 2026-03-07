@@ -1,0 +1,487 @@
+{
+  "metadata": {
+    "title": "MARRYNOV — Développeur Fullstack Web & Mobile à La Réunion",
+    "description": "Sites web, applications métier, apps mobiles et automatisation sur mesure. Un seul interlocuteur de A à Z, basé à La Réunion. Moins d'intermédiaires, moins de délais, plus de résultats."
+  },
+  "nav": {
+    "brand": "MARRYNOV",
+    "tagline": "Ici pour vous développer.",
+    "services": "Services",
+    "projects": "Réalisations",
+    "about": "À propos",
+    "blog": "Blog",
+    "contact": "Parlons de votre projet"
+  },
+  "hero": {
+    "badge": "Disponible",
+    "title": " Le développeur <highlight>réunionnais</highlight>, pour tous vos projets numériques.",
+    "subtitle": "Sites web, applications métier, apps mobiles et automatisation sur mesure. Un seul interlocuteur de A à Z, basé à La Réunion. Moins d'intermédiaires, moins de délais, plus de résultats.",
+    "cta_primary": "Demandez un devis gratuit",
+    "cta_secondary": "Voir mes réalisations"
+  },
+  "trustBar": {
+    "items": [
+      { "value": "12 ans", "label": "d'expérience dev" },
+      { "value": "6 ans", "label": "Expert Tech Santé" },
+      { "value": "Web & App", "label": "Mobile Native" },
+      { "value": "La Réunion", "label": "Basé localement" }
+    ]
+  },
+  "services": {
+    "title": "Mes services sur-mesure",
+    "subtitle": "Des solutions adaptées à votre stade de développement, du lancement de projet à la transformation digitale complète.",
+    "businessSolutions": {
+      "title": "Solutions Métiers Spécifiques",
+      "subtitle": "Des besoins particuliers ? Je conçois également des solutions 100% adaptées à vos enjeux.",
+      "solutions": [
+        {
+          "name": "Automatisation Métier",
+          "description": "Réduisez vos tâches répétitives et gagnez du temps pour vous et vos employés.",
+          "price": "Sur devis",
+          "unit": "",
+          "badge": "Incontournable",
+          "features": [
+            "Automatisation CRM & suivi des leads",
+            "Génération automatique de devis & factures",
+            "Synchronisation entre outils (ERP, CRM, compta)",
+            "Rapports & alertes en temps réel"
+          ],
+          "cta": "Automatiser mon entreprise",
+          "highlighted": false
+        },
+        {
+          "name": "Développement Sur Mesure",
+          "description": "Votre projet unique mérite une solution unique.",
+          "price": "Sur devis",
+          "unit": "",
+          "features": [
+            "Analyse approfondie de vos besoins métier",
+            "Architecture technique personnalisée",
+            "Intégrations API tierces",
+            "Code évolutif et maintenable"
+          ],
+          "cta": "Discuter de mon besoin",
+          "highlighted": false
+        }
+      ]
+    },
+    "packs": [
+      {
+        "name": "Pack Standard",
+        "description": "Idéal pour les artisans et libéraux qui veulent une présence web.",
+        "price": "2 500€",
+        "unit": "/ projet",
+        "features": [
+          "Site Vitrine (jusqu'à 5 pages)",
+          "Design Responsive & Moderne",
+          "Optimisation SEO de base",
+          "Formulaire de contact sécurisé"
+        ],
+        "cta": "Commander ce pack",
+        "highlighted": false
+      },
+      {
+        "name": "Pack Pro",
+        "description": "Pour les PME qui veulent générer du business en ligne.",
+        "price": "4 500€",
+        "unit": "/ projet",
+        "badge": "Le plus populaire",
+        "features": [
+          "Site Dynamique (CMS ou Custom)",
+          "Blog / Actualités",
+          "Panel d'administration",
+          "SEO Avancé & Google Analytics",
+          "Formation à la prise en main"
+        ],
+        "cta": "Choisir le Pack Pro",
+        "highlighted": true
+      },
+      {
+        "name": "Pack Expert",
+        "description": "Applications complexes, SaaS et plateformes métiers.",
+        "price": "12 000€+",
+        "unit": "/ sur devis",
+        "features": [
+          "App Mobile (iOS & Android)",
+          "Backend API robuste",
+          "Fonctionnalités temps réel",
+          "Maintenance évolutive"
+        ],
+        "cta": "Discuter du projet",
+        "highlighted": false
+      }
+    ],
+    "automationShowcase": {
+      "title": "Ce que j'automatise pour vous",
+      "subtitle": "Les entreprises qui automatisent leurs processus métier économisent en moyenne 6h par semaine — et réduisent leurs erreurs de 90%.",
+      "useCases": [
+        {
+          "title": "Emails & relances auto",
+          "desc": "Séquences automatiques, confirmations de commande, rappels de paiement client"
+        },
+        {
+          "title": "Devis & factures",
+          "desc": "Génération automatique depuis vos formulaires, CRM ou commandes en ligne"
+        },
+        {
+          "title": "Intégrations & API",
+          "desc": "Connectez vos outils entre eux : CRM, compta, ERP, Stripe, Notion..."
+        },
+        {
+          "title": "Reporting automatique",
+          "desc": "Tableaux de bord mis à jour en temps réel, sans aucune saisie manuelle"
+        },
+        {
+          "title": "CRM & suivi des leads",
+          "desc": "Scoring automatique, affectation des prospects, relances commerciales planifiées"
+        },
+        {
+          "title": "Alertes & notifications",
+          "desc": "Soyez alerté instantanément dès qu'une action importante se produit"
+        }
+      ]
+    }
+  },
+  "process": {
+    "title": "Comment ça se passe ?",
+    "subtitle": "Un processus transparent et structuré pour la réussite de votre projet.",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Appel Découverte",
+        "description": "On discute de vos besoins et objectifs."
+      },
+      {
+        "number": "2",
+        "title": "Proposition",
+        "description": "Devis détaillé et planning prévisionnel."
+      },
+      {
+        "number": "3",
+        "title": "Signature",
+        "description": "Validation du devis et acompte de 30%."
+      },
+      {
+        "number": "4",
+        "title": "Développement",
+        "description": "Construction itérative avec points réguliers."
+      },
+      {
+        "number": "5",
+        "title": "Livraison",
+        "description": "Mise en ligne, formation et solde final."
+      }
+    ]
+  },
+  "whyMe": {
+    "title": "Pourquoi me faire confiance ?",
+    "benefits": [
+      {
+        "title": "Interlocuteur unique",
+        "description": "Pas de chef de projet, pas de sous-traitant. Vous parlez directement à celui qui conçoit et développe votre solution."
+      },
+      {
+        "title": "Construit pour durer",
+        "description": "Code propre, documenté et maintenable. Votre projet ne dépend pas de moi — vous restez libre."
+      },
+      {
+        "title": "6 ans en santé numérique",
+        "description": "RGPD, hébergement HDS, contraintes CPAM — je connais votre secteur. Pas besoin de tout m'expliquer."
+      },
+      {
+        "title": "Basé à La Réunion, disponible maintenant",
+        "description": "Je me déplace, je décroche, je réponds sous 24h. Pas de décalage horaire, pas d'attente."
+      }
+    ],
+    "quote": "Vous m'expliquez votre besoin, je m'occupe de la technique. Vous gardez le contrôle, sans les complications."
+  },
+  "faq": {
+    "title": "Questions Fréquentes",
+    "items": [
+      {
+        "question": "Puis-je bénéficier d'une aide financière pour mon projet digital ?",
+        "answer": "Oui ! Si vous êtes une entreprise réunionnaise, la Région finance votre transformation numérique via Kap Numérik. Jusqu'à 3 200 € d'aide directement déduite de votre facture. Concrètement, un site à 2 500 € peut vous revenir à moins de 500 € après aide. Je m'occupe de toutes les démarches administratives pour vous faciliter l'accès à ce dispositif."
+      },
+      {
+        "question": "Je connais pas grand chose en informatique, est-ce que c'est un problème ?",
+        "answer": "Pas du tout, c'est même la majorité de mes clients. Je m'occupe de toute la partie technique. Vous me décrivez votre besoin, je vous propose une solution concrète, en créole ou français, sans jargon."
+      },
+      {
+        "question": "Quels sont les délais de livraison réels ?",
+        "answer": "Un site vitrine : 3 semaines. Une application métier : 6 à 8 semaines. Une app mobile : 10 à 14 semaines. Je m'engage sur un planning précis dès le devis, avec des points d'avancement chaque semaine."
+      },
+      {
+        "question": "Combien ça coûte ?",
+        "answer": "Mes packs démarrent à 2 500 € HT pour un site vitrine. Chaque projet est chiffré sur mesure après un premier échange gratuit. Pas de mauvaise surprise : le devis est détaillé et fixe."
+      },
+      {
+        "question": "Proposez-vous de la maintenance ?",
+        "answer": "Chaque projet inclut une garantie corrective de 3 mois. Au-delà, je propose des contrats de maintenance à partir de 200 €/mois pour garder votre application sécurisée et à jour."
+      },
+      {
+        "question": "Quelles sont les modalités de paiement ?",
+        "answer": "Le paiement se fait en 3 fois : 30 % à la signature, 40 % à la livraison en recette, 30 % à la mise en production. Vous pouvez aussi bénéficier de l'aide Kap Numérik (jusqu'à 3 200 € financés par la Région)."
+      },
+      {
+        "question": "Puis-je modifier le site moi-même après la livraison ?",
+        "answer": "Oui. Je vous forme à la prise en main et je vous remets toute la documentation. Vous êtes autonome, et je reste disponible si besoin."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Vous avez un projet ?",
+    "title2": "Parlons-en.",
+    "subtitle": "Discutons de vos besoins et voyons comment nous pouvons travailler ensemble pour atteindre vos objectifs.",
+    "button": "Contactez-moi",
+    "guarantee": "Réponse garantie sous 24h"
+  },
+  "about": {
+    "hero": {
+      "name": "Nicolas MARRY",
+      "role": "Développeur Fullstack & Fondateur",
+      "badge": "Komen i lé !",
+      "badge2": "Bonzour à zot !",
+      "experience": "12+ Ans",
+      "description": "Gran kaf !",
+      "experienceLabel": "Expérience",
+      "bio1": "Je m'appelle Nicolas MARRY, développeur fullstack web & mobile depuis plus de 12 ans. Réunionnais, j'ai grandi ici avant de partir à Bordeaux pour décrocher mon Master en développement mobile et IoT. Mais La Réunion, c'est chez moi — je suis revenu pour mettre mes compétences au service des entreprises de mon île.",
+      "bio2": "Pendant 8 ans en salariat, j'ai conçu et développé des applications pour le secteur de la santé : EHPAD, hôpitaux, cabinets médicaux. 6 ans à comprendre les contraintes du terrain, les exigences de sécurité, et surtout les vrais besoins des utilisateurs. En 2026, j'ai fondé <highlight>MARRYNOV</highlight> — mon nom, MARRY, et 'NOV' (pour innovation) comme nouveau départ. Une façon de faire du développement autrement : en proximité, en confiance, sans intermédiaire.",
+      "cta_primary": "Discutons de votre projet",
+      "cta_secondary": "Mon parcours"
+    },
+    "timeline": {
+      "title": "Mon Parcours",
+      "events": [
+        {
+          "year": "2018",
+          "title": "Début de carrière — LOCATEX, Saint-Pierre",
+          "description": "Commencement dans le développement web professionnel."
+        },
+        {
+          "year": "2020",
+          "title": "Spécialisation Santé Numérique — ITAF.TECH, Bordeaux",
+          "description": "Lead Dev sur des projets critiques dans le secteur de la santé connectée."
+        },
+        {
+          "year": "2022",
+          "title": "Diplômé Master en dev mobile & IoT — YNOV, Bordeaux",
+          "description": "Formation d'ingénieur en développement d'applications mobiles et objets connectés, au sein du réseau YNOV — classé parmi les écoles du numérique les plus reconnues en France."
+        },
+        {
+          "year": "2026",
+          "title": "Création de MARRYNOV — La Réunion",
+          "description": "Lancement de mon activité micro-entreprise pour accompagner les entrepreneurs ambitieux."
+        }
+      ]
+    },
+    "values": {
+      "title": "Mes Valeurs",
+      "subtitle": "Au-delà du code, c'est un état d'esprit que j'apporte à chaque collaboration.",
+      "items": [
+        {
+          "title": "Proximité",
+          "description": "Une relation directe, sans intermédiaire. Je suis votre unique point de contact pour une communication fluide et efficace."
+        },
+        {
+          "title": "Expertise",
+          "description": "Une veille technique constante pour vous proposer les solutions les plus pérennes et performantes du marché."
+        },
+        {
+          "title": "Fiabilité",
+          "description": "Respect des délais et des engagements. Votre projet mérite d'être livré en temps et en heure."
+        },
+        {
+          "title": "Honnêteté",
+          "description": "Transparence totale sur les coûts et la faisabilité. Je ne vends pas du rêve, je construis du concret."
+        }
+      ]
+    },
+    "techStack": {
+      "title": "Ma Stack Technique",
+      "items": [
+        { "name": "React", "color": "#61dafb" },
+        { "name": "Node.js", "color": "#339933" },
+        { "name": "TypeScript", "color": "#3178c6" },
+        { "name": "Tailwind", "color": "#06b6d4" },
+        { "name": "Docker", "color": "#2496ed" }
+      ]
+    },
+    "hobbies": {
+      "title": "Passionné de...",
+      "items": [
+        {
+          "title": "Badminton",
+          "description": "Compétition et détente. Le sport m'apporte la rigueur et l'esprit d'équipe."
+        },
+        {
+          "title": "Beatmaking & Composition",
+          "description": "Création musicale à mes heures perdues."
+        },
+        {
+          "title": "Veille Techno",
+          "description": "Curiosité insatiable. J'apprends chaque jour pour rester à la pointe."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Prêt à travailler ensemble ?",
+      "subtitle": "Vous avez un projet en tête ? Transformons vos idées en solutions numériques concrètes et performantes.",
+      "button": "Démarrer un projet"
+    }
+  },
+  "projects": {
+    "title": "Ce que j'ai déjà construit",
+    "subtitle": "Quelques projets réalisés ces dernières années...",
+    "filters": {
+      "all": "Tous",
+      "web": "Sites web",
+      "business": "Applications métier",
+      "mobile": "Apps mobiles",
+      "health": "Santé"
+    },
+    "items": [
+      {
+        "title": "Linestie",
+        "description": "Application mobile dédiée à la coordination opérationnelle au sein des EHPAD, facilitant les échanges entre soignants.",
+        "tags": ["REACT NATIVE", "NODE.JS", "MONGODB"],
+        "category": ["mobile", "health"],
+        "type": "Professionnel",
+        "badge": "SANTÉ",
+        "image": "/images/projects/linestie.jpg"
+      },
+      {
+        "title": "ISIS Diabète",
+        "description": "Plateforme de prescription et de suivi pour les patients diabétiques, permettant une gestion fine des protocoles de soin.",
+        "tags": ["REACT", "EXPRESS.JS", "MONGODB"],
+        "category": ["web", "health"],
+        "type": "Professionnel",
+        "badge": "SANTÉ",
+        "image": "/images/projects/isis.jpg"
+      },
+      {
+        "title": "OUTTA",
+        "description": "Application de géolocalisation offrant des réductions en temps réel dans les restaurants partenaires aux alentours.",
+        "tags": ["REACT NATIVE", "FIREBASE", "NODE.JS"],
+        "category": ["mobile"],
+        "type": "Projet école",
+        "badge": "MONGODB",
+        "image": "/images/projects/outta.jpg"
+      },
+      {
+        "title": "Influx",
+        "description": "Solution de mise en relation entre micro-influenceurs et marques locales pour des campagnes marketing ciblées.",
+        "tags": ["REACT NATIVE", "FIREBASE", "EXPRESS.JS"],
+        "category": ["mobile"],
+        "type": "Projet école",
+        "badge": "MONGODB",
+        "image": "/images/projects/influx.jpg"
+      },
+      {
+        "title": "MySeance",
+        "description": "Outil personnel de suivi de fréquentation en salle de sport et gestion de planning d'entraînement personnalisé.",
+        "tags": ["MONGODB", "KOTLIN", "C#"],
+        "category": ["mobile"],
+        "type": "Personnel",
+        "badge": "",
+        "image": "/images/projects/myseance.jpg"
+      },
+      {
+        "title": "StatMag",
+        "description": "Dashboard complet pour l'analyse des ventes et la gestion des stocks pour les gérants de magasins de détail.",
+        "tags": ["SPRING BOOT", "JAVA FX", "PHP"],
+        "category": ["business"],
+        "type": "Professionnel",
+        "badge": "JAVASCRIPT",
+        "image": "/images/projects/statmag.jpg"
+      }
+    ],
+    "viewProject": "Voir le projet",
+    "testimonials": {
+      "title": "Ce qu'ils disent de moi",
+      "items": [
+        {
+          "text": "Travailler avec MARRYNOV a été une révélation. Il a su transformer notre besoin métier complexe en une application fluide et performante. Sa double compétence technique et UX est un atout majeur.",
+          "author": "Jean-Pierre Durand",
+          "role": "Directeur IT, Linestie Santé"
+        },
+        {
+          "text": "Un développeur réactif, précis et force de proposition. Le déploiement de notre plateforme e-commerce a été un succès total grâce à son expertise Next.js. Je recommande vivement.",
+          "author": "Sophie Lambert",
+          "role": "Fondatrice, BioMarket"
+        }
+      ]
+    },
+    "ctaTitle": "Votre projet pourrait être le prochain.",
+    "ctaSubtitle": "Prêt à donner vie à vos idées ? Discutons ensemble de vos objectifs et créons une solution sur-mesure pour votre entreprise.",
+    "ctaButton": "Parlons-en"
+  },
+  "contact": {
+    "title": "Parlons de votre projet",
+    "subtitle": "Vous avez une idée ? Transformons-la en réalité numérique. Réservez votre appel découverte gratuit de 30 minutes ou remplissez le formulaire ci-dessous.",
+    "form": {
+      "sectionTitle": "Détails du projet",
+      "name": "Nom complet",
+      "namePlaceholder": "Marie PAYET",
+      "email": "Email professionnel",
+      "emailPlaceholder": "jean@entreprise.re",
+      "phone": "Téléphone (Optionnel)",
+      "phonePlaceholder": "+262 692 ...",
+      "serviceType": "Type de service",
+      "serviceTypePlaceholder": "Sélectionnez une option",
+      "budget": "Budget estimé",
+      "budgetPlaceholder": "Quelle est votre enveloppe budgétaire ?",
+      "projectType": "Type de projet souhaité",
+      "projectTypeSubtitle": "Sélectionnez une ou plusieurs options",
+      "projectTypes": {
+        "showcase": "Site vitrine",
+        "ecommerce": "E-commerce / Boutique en ligne",
+        "webapp": "Application web / SaaS",
+        "mobile": "Application mobile",
+        "automation": "Automatisation de processus",
+        "dashboard": "Dashboard / Tableau de bord",
+        "redesign": "Refonte de site existant",
+        "maintenance": "Maintenance / Support",
+        "other": "Autre"
+      },
+      "description": "Description du projet",
+      "descriptionPlaceholder": "Parlez-moi de vos objectifs, de votre cible et des fonctionnalités souhaitées...",
+      "privacy": "J'accepte que mes données personnelles soient utilisées pour traiter ma demande et me recontacter. Aucun démarchage, aucune revente.",
+      "submit": "Envoyer ma demande"
+    },
+    "info": {
+      "title": "Coordonnées",
+      "location": { "label": "Localisation", "value": "Saint-Denis, La Réunion" },
+      "email": { "label": "Email", "value": "contact@marrynov.re" },
+      "phone": { "label": "Téléphone", "value": "+262 692 40 00 66" },
+      "availability": {
+        "label": "Disponibilité",
+        "value": "Lun - Ven : 09h00 - 18h00"
+      },
+      "socials": "Réseaux sociaux"
+    },
+    "kapNumerik": {
+      "title": "Aide Kap Numérik",
+      "description": "Vous êtes une entreprise réunionnaise ? La région finance votre transition digitale.",
+      "amount": "3 200€",
+      "amountLabel": "d'aide maximale"
+    }
+  },
+  "footer": {
+    "description": "Développement web et mobile sur mesure pour les entreprises ambitieuses. Qualité, proximité et innovation.",
+    "siret": "SIRET : 123 456 789 00012",
+    "navigation": "Navigation",
+    "contactTitle": "Contact",
+    "email": "contact@marrynov.re",
+    "phone": "+262 692 40 00 66",
+    "location": "Saint-Denis, La Réunion",
+    "copyright": "© 2026 MARRYNOV. Tous droits réservés. Fait avec ❤️ à La Réunion 🌋.",
+    "links": {
+      "services": "Mes Services",
+      "projects": "Réalisations",
+      "about": "À propos",
+      "blog": "Blog",
+      "legal": "Mentions Légales",
+      "privacy": "Politique de confidentialité"
+    }
+  }
+}
