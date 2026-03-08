@@ -12,7 +12,9 @@ COPY apps/marrynov/package.json ./apps/marrynov/
 COPY packages/config-eslint/package.json ./packages/config-eslint/
 COPY packages/config-typescript/package.json ./packages/config-typescript/
 
-RUN pnpm install --frozen-lockfile --filter @marrynov/site...
+# shamefully-hoist pour que next soit accessible depuis la workspace root (requis par Turbopack)
+RUN echo "shamefully-hoist=true" >> .npmrc && \
+    pnpm install --frozen-lockfile --filter @marrynov/site...
 
 # ── Stage 2 : builder ─────────────────────────────────────────────────
 FROM node:20-alpine AS builder
