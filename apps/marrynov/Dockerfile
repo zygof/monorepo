@@ -4,7 +4,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Installer pnpm
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN npm install -g pnpm@9.0.0
 
 # Copier les manifests du monorepo
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -19,7 +19,7 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN npm install -g pnpm@9.0.0
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/marrynov/node_modules ./apps/marrynov/node_modules
