@@ -7,7 +7,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9 --activate
 
 # Copier les manifests du monorepo
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/marrynov/package.json ./apps/marrynov/
 COPY packages/config-eslint/package.json ./packages/config-eslint/
 COPY packages/config-typescript/package.json ./packages/config-typescript/
@@ -45,9 +45,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/apps/marrynov/public ./public
+# Monorepo standalone : server.js est dans apps/marrynov/, pas à la racine
 COPY --from=builder --chown=nextjs:nodejs /app/apps/marrynov/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/marrynov/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/marrynov/public ./apps/marrynov/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/marrynov/.next/static ./apps/marrynov/.next/static
 
 USER nextjs
 
@@ -55,4 +56,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# server.js fait process.chdir(__dirname) → CWD = /app/apps/marrynov/
+CMD ["node", "/app/apps/marrynov/server.js"]
