@@ -25,7 +25,39 @@ export interface Service {
   category?: ServiceCategory;
 }
 
-export type ServiceCategory = 'coupe' | 'coloration' | 'soin' | 'coiffage' | 'mariage';
+export type ServiceCategory =
+  | 'coupe'
+  | 'coloration'
+  | 'soin'
+  | 'coiffage'
+  | 'lissage'
+  | 'extensions'
+  | 'evenement'
+  | 'mariage';
+
+export interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  imageAlt: string;
+  badge?: string;
+  /** URL vers la fiche produit ou page d'achat externe */
+  url?: string;
+}
+
+export interface EventPackage {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  /** Liste des prestations incluses */
+  features: string[];
+  featured?: boolean;
+  badge?: string;
+}
 
 export interface TeamMember {
   id: string;
@@ -124,6 +156,44 @@ export interface SeoConfig {
   ogImageAlt: string;
 }
 
+/* ── Booking Types ────────────────────────────────────────────────────── */
+
+export interface BookingContact {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  notes: string;
+  smsNotif: boolean;
+  acceptCgv: boolean;
+}
+
+export type BookingStep = 1 | 2 | 3 | 'confirmed';
+
+export interface BookingState {
+  step: BookingStep;
+  selectedServices: Service[];
+  selectedProducts: Product[];
+  /** 'any' = premier disponible, sinon TeamMember.id */
+  stylistId: string;
+  date: string | null; // 'YYYY-MM-DD'
+  timeSlot: string | null; // 'HH:MM'
+  contact: BookingContact;
+}
+
+export type BookingAction =
+  | { type: 'TOGGLE_SERVICE'; service: Service }
+  | { type: 'TOGGLE_PRODUCT'; product: Product }
+  | { type: 'SET_STYLIST'; id: string }
+  | { type: 'SET_DATE'; date: string }
+  | { type: 'SET_TIME'; slot: string }
+  | { type: 'SET_CONTACT_FIELD'; field: keyof BookingContact; value: string | boolean }
+  | { type: 'GO_NEXT' }
+  | { type: 'GO_PREV' }
+  | { type: 'CONFIRM' };
+
+/* ── SalonConfig ──────────────────────────────────────────────────────── */
+
 export interface SalonConfig {
   name: string;
   /** Nom court pour le logo */
@@ -138,6 +208,8 @@ export interface SalonConfig {
   bookingUrl: string;
   servicesUrl: string;
   copyright: string;
+  /** Instructions affichées dans l'email et la page de confirmation du RDV */
+  bookingInstructions?: string[];
   hero: HeroContent;
   servicesSection: ServicesSectionContent;
   ctaBanner: CtaBannerContent;

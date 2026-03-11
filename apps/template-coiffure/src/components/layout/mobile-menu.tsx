@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Menu, X, Phone, Calendar } from 'lucide-react';
 import { Button } from '@marrynov/ui';
 import type { NavLink } from '@/types/salon';
+import { MobileNavLink } from './nav-link';
 
 interface MobileMenuProps {
   navLinks: NavLink[];
@@ -87,14 +88,7 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
         <div className="mx-auto max-w-7xl px-6 py-6 flex flex-col gap-1">
           {/* Nav links */}
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={close}
-              className="flex items-center rounded-lg px-4 py-3 text-base font-medium text-text transition-colors hover:bg-primary-light hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              {link.label}
-            </Link>
+            <MobileNavLink key={link.href} link={link} onClick={close} />
           ))}
 
           {/* Séparateur */}

@@ -75,15 +75,10 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
         <Button
           asChild
           variant={featured ? 'default' : 'outline'}
-          size="pill"
-          className={cn(
-            'w-full',
-            featured
-              ? 'hover:bg-primary-dark'
-              : 'border-2 border-primary text-primary hover:bg-primary-light',
-          )}
+          size="pill-sm"
+          className={cn('w-full', featured ? 'hover:bg-primary-dark' : '')}
         >
-          <Link href={bookingUrl}>Réserver</Link>
+          <Link href={`${bookingUrl}?service=${service.slug}`}>Réserver</Link>
         </Button>
       </div>
     </article>

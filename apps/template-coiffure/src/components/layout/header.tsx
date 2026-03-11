@@ -4,6 +4,7 @@ import { Scissors, Phone, User } from 'lucide-react';
 import { Button } from '@marrynov/ui';
 import { salonConfig } from '@/config/salon.config';
 import { MobileMenu } from './mobile-menu';
+import { DesktopNavLink } from './nav-link';
 
 /**
  * Header sticky avec backdrop blur.
@@ -29,16 +30,7 @@ export function Header(): JSX.Element {
         {/* Navigation desktop */}
         <nav className="hidden lg:flex items-center h-full" aria-label="Navigation principale">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="relative h-full flex items-center px-4 text-base font-medium text-text transition-colors hover:text-primary
-                [&.active]:text-primary [&.active]:after:absolute [&.active]:after:bottom-0
-                [&.active]:after:left-0 [&.active]:after:right-0 [&.active]:after:h-0.5
-                [&.active]:after:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              {link.label}
-            </Link>
+            <DesktopNavLink key={link.href} link={link} />
           ))}
         </nav>
 

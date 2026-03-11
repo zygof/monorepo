@@ -40,9 +40,9 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
+      <DialogClose className="absolute right-4 top-4 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full opacity-60 transition-opacity hover:bg-primary-light hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none">
+        <X className="h-5 w-5" />
+        <span className="sr-only">Fermer</span>
       </DialogClose>
     </DialogPrimitive.Content>
   </DialogPortal>
