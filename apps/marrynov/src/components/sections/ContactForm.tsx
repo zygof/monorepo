@@ -4,9 +4,11 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useAnalytics } from "@marrynov/monitoring/analytics";
 
 export function ContactForm() {
   const t = useTranslations("contact.form");
+  const { track } = useAnalytics();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -92,7 +94,6 @@ export function ContactForm() {
     setSubmitStatus({ type: null, message: "" });
 
     try {
-      // TODO: Replace with your actual API endpoint
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: {
@@ -102,6 +103,10 @@ export function ContactForm() {
       });
 
       if (response.ok) {
+        track("form_submit", {
+          form_id: "contact",
+          form_name: "Formulaire de contact / devis",
+        });
         setSubmitStatus({
           type: "success",
           message: "Message envoyé avec succès ! Je vous recontacte sous 24h.",
@@ -136,6 +141,7 @@ export function ContactForm() {
         <Image
           src={"/icons/edit.svg"}
           alt=""
+          aria-hidden="true"
           width={18}
           height={18}
           className="h-4.5 w-4.5"

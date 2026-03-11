@@ -10,13 +10,18 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: ["lucide-react", "recharts"],
   },
+  // Transpiler les packages du monorepo qui ne sont pas compilés
+  transpilePackages: ["@marrynov/monitoring"],
 };
 
 export default withSentryConfig(withNextIntl(nextConfig), {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
+  // Release = SHA du commit (injecté par CI/CD via GITHUB_SHA)
+  // Permet de lier chaque erreur Sentry au déploiement exact
+  release: process.env.GITHUB_SHA ? { name: process.env.GITHUB_SHA } : undefined,
   // Pas d'upload de sourcemaps en local (CI only)
   sourcemaps: {
     disable: process.env.NODE_ENV !== "production",
@@ -25,5 +30,4 @@ export default withSentryConfig(withNextIntl(nextConfig), {
   telemetry: false,
   // Pas d'overlay d'erreur Sentry en dev (on garde Next.js natif)
   disableLogger: true,
-  hideSourceMaps: true,
 });
