@@ -1,0 +1,58 @@
+/**
+ * @marrynov/ui — CSS variables Shadcn/ui
+ *
+ * Ce fichier mappe les tokens MARRYNOV sur les variables Shadcn.
+ * Chaque template importe ce fichier ET surcharge les variables
+ * --color-primary, --color-secondary, etc. avec ses propres tokens.
+ *
+ * Import dans un template :
+ *   @import "@marrynov/design-tokens";        ← tokens de base
+ *   @import "@marrynov/ui/styles";            ← variables Shadcn
+ *   :root { --color-primary: #8B2D5C; }       ← surcharge template
+ */
+
+@import '@marrynov/design-tokens';
+
+@layer base {
+  :root {
+    /* Shadcn variables — mappées sur les tokens MARRYNOV */
+    --background: var(--color-bg-white);
+    --foreground: var(--color-text);
+
+    --card: var(--color-surface);
+    --card-foreground: var(--color-text);
+
+    --popover: var(--color-surface);
+    --popover-foreground: var(--color-text);
+
+    --primary: var(--color-primary);
+    --primary-foreground: #ffffff;
+
+    --secondary: var(--color-secondary);
+    --secondary-foreground: #ffffff;
+
+    --muted: var(--color-bg-light);
+    --muted-foreground: var(--color-text-muted);
+
+    --accent: var(--color-secondary-light);
+    --accent-foreground: var(--color-text);
+
+    --destructive: var(--color-error);
+    --destructive-foreground: #ffffff;
+
+    --border: var(--color-border);
+    --input: var(--color-border);
+    --ring: var(--color-primary);
+
+    --radius: var(--radius-md);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}

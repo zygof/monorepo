@@ -1,0 +1,10 @@
+{
+  "extends": "@marrynov/config-typescript/base.json",
+  "compilerOptions": {
+    "outDir": "dist-types",
+    "rootDir": "src",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist-types"]
+}

@@ -2,11 +2,13 @@
   "name": "@marrynov/design-tokens",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "exports": {
     ".": "./src/index.css",
     "./tokens": "./src/tokens.ts"
   },
   "scripts": {
+    "build": "tsx scripts/build-tokens.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit"
@@ -14,6 +16,7 @@
   "devDependencies": {
     "@marrynov/config-typescript": "workspace:*",
     "eslint": "^8.57.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.5.0"
   }
 }

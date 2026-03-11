@@ -1,0 +1,34 @@
+{
+  "name": "@marrynov/monitoring",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./sentry": "./src/sentry.ts",
+    "./analytics": "./src/analytics.ts",
+    "./gtm": "./src/gtm.tsx",
+    "./consent-banner": "./src/consent-banner/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@marrynov/config-eslint": "workspace:*",
+    "@marrynov/config-typescript": "workspace:*",
+    "@sentry/nextjs": "^10.42.0",
+    "@types/react": "^19",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "@sentry/nextjs": ">=10.0.0",
+    "next": ">=15.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@sentry/nextjs": {
+      "optional": true
+    }
+  }
+}
