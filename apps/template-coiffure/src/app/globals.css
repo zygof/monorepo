@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Scanner les composants du package UI partagé (transpilePackages, non scanné par défaut) */
+@source '../../../../packages/ui/src';
+
 /**
  * MARRYHAIR — Design Tokens
  *

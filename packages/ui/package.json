@@ -20,16 +20,16 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.564.0",
-    "tailwind-merge": "^2.6.0"
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@figma/code-connect": "^1.4.1",
     "@marrynov/config-eslint": "workspace:*",
     "@marrynov/config-typescript": "workspace:*",
-    "eslint": "^8.57.0",
-    "typescript": "^5.5.0",
     "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/react-dom": "^19",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
