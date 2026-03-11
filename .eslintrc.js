@@ -9,7 +9,15 @@ module.exports = {
     ecmaVersion: 2022,
     sourceType: 'module',
   },
-  ignorePatterns: ['node_modules/', '.next/', 'dist/', '.turbo/', 'coverage/', 'tools/'],
+  ignorePatterns: [
+    'node_modules/',
+    '.next/',
+    'dist/',
+    '.turbo/',
+    'coverage/',
+    'tools/',
+    '**/next-env.d.ts',
+  ],
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],
