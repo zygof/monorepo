@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { ServiceCard } from '@/components/ui/service-card';
+import { SectionHeader } from '@/components/ui/section-header';
 import { salonConfig, featuredServices } from '@/config/salon.config';
 
 /**
@@ -20,15 +21,11 @@ export function ServicesSection(): JSX.Element {
       aria-labelledby="services-heading"
     >
       <div className="mx-auto max-w-7xl">
-        {/* En-tête de section */}
-        <div className="mb-16 text-center">
-          <h2 id="services-heading" className="mb-4 font-serif text-4xl font-bold text-primary">
-            {servicesSection.heading}
-          </h2>
-          <p className="mx-auto max-w-2xl text-base leading-relaxed text-text-subtle">
-            {servicesSection.description}
-          </p>
-        </div>
+        <SectionHeader
+          id="services-heading"
+          heading={servicesSection.heading}
+          description={servicesSection.description}
+        />
 
         {/* Grille des 3 services */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">

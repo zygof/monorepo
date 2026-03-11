@@ -21,6 +21,13 @@ const buttonVariants = cva(
         sm: 'h-9 rounded-[--radius] px-3',
         default: 'h-10 px-4 py-2',
         lg: 'h-11 rounded-[--radius] px-8',
+        /**
+         * pill — bouton arrondi pleine largeur, adapté aux templates salon/restaurant.
+         * Taille grande pour les CTA principaux (Réserver, Prendre RDV…).
+         */
+        pill: 'rounded-full h-auto px-8 py-4 text-base',
+        /** pill-sm — CTA secondaire, taille compacte (header, footer…) */
+        'pill-sm': 'rounded-full h-auto px-6 py-2.5 text-sm',
         icon: 'h-10 w-10',
       },
     },

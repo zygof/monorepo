@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Clock, Layers, ArrowRight, Calendar } from 'lucide-react';
+import { Button } from '@marrynov/ui';
 import { TrustBadgePill } from '@/components/ui/trust-badge-pill';
 import { salonConfig } from '@/config/salon.config';
 
@@ -12,8 +13,7 @@ import { salonConfig } from '@/config/salon.config';
  *  - Image full-bleed avec dégradé blanc gauche
  *  - Trust badge pills (note, ancienneté, spécialité)
  *  - H1 avec dégradé coloré sur la 2ème ligne
- *  - Description
- *  - Deux CTAs (primary filled + secondary outline)
+ *  - Deux CTAs via Button asChild (pas de <a> dans <button>)
  *  - Bandeau d'urgence (disponibilités)
  *
  * TODO : le bandeau d'urgence doit être dynamique (API disponibilités)
@@ -39,7 +39,6 @@ export function HeroSection(): JSX.Element {
           quality={90}
           sizes="100vw"
         />
-        {/* Dégradé blanc de gauche vers transparent */}
         <div
           className="absolute inset-0"
           style={{ background: 'var(--gradient-hero-overlay)' }}
@@ -103,20 +102,26 @@ export function HeroSection(): JSX.Element {
 
             {/* CTAs */}
             <div className="mb-6 flex flex-wrap items-center gap-4">
-              <Link
-                href={bookingUrl}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-medium text-white shadow-primary-glow transition-all hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              <Button
+                asChild
+                variant="default"
+                size="pill"
+                className="shadow-primary-glow hover:bg-primary-dark"
               >
-                {hero.ctaPrimary}
-                <Calendar size={16} aria-hidden="true" />
-              </Link>
+                <Link href={bookingUrl}>
+                  {hero.ctaPrimary}
+                  <Calendar size={16} aria-hidden="true" />
+                </Link>
+              </Button>
 
-              <Link
-                href={servicesUrl}
-                className="inline-flex items-center justify-center rounded-full border-2 border-border-subtle bg-white px-8 py-4 text-base font-medium text-text transition-all hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              <Button
+                asChild
+                variant="outline"
+                size="pill"
+                className="border-2 border-border-subtle bg-white text-text hover:border-primary hover:text-primary hover:bg-transparent"
               >
-                {hero.ctaSecondary}
-              </Link>
+                <Link href={servicesUrl}>{hero.ctaSecondary}</Link>
+              </Button>
             </div>
 
             {/* Bandeau urgence — TODO: rendre dynamique via API disponibilités */}

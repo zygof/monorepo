@@ -27,7 +27,9 @@
     "@marrynov/config-eslint": "workspace:*",
     "@marrynov/config-typescript": "workspace:*",
     "eslint": "^8.57.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

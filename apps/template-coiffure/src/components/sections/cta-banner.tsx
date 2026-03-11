@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import Link from 'next/link';
+import { Button } from '@marrynov/ui';
 import { salonConfig } from '@/config/salon.config';
 
 /**
@@ -35,12 +36,14 @@ export function CtaBanner(): JSX.Element {
 
         <p className="max-w-2xl text-lg leading-relaxed text-white/80">{ctaBanner.description}</p>
 
-        <Link
-          href={bookingUrl}
-          className="inline-flex items-center justify-center rounded-full bg-secondary px-10 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-secondary-dark hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        <Button
+          asChild
+          variant="secondary"
+          size="pill"
+          className="shadow-lg hover:bg-secondary-dark hover:shadow-xl focus-visible:outline-white"
         >
-          {ctaBanner.buttonLabel}
-        </Link>
+          <Link href={bookingUrl}>{ctaBanner.buttonLabel}</Link>
+        </Button>
       </div>
     </section>
   );

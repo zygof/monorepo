@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@marrynov/ui';
+import { Button, Badge, cn } from '@marrynov/ui';
 import type { Service } from '@/types/salon';
 
 interface ServiceCardProps {
@@ -15,13 +15,13 @@ interface ServiceCardProps {
  *
  * Deux variantes visuelles :
  *  - Standard  : fond blanc, bordure primary au survol, CTA outline
- *  - Featured  : bordure gold (secondary), badge "Le plus demandé", CTA filled
+ *  - Featured  : bordure gold (secondary), Badge "Le plus demandé", CTA filled
  *
  * Backend-ready : reçoit un objet Service typé (même interface que l'API).
+ * Design system : utilise Button et Badge de @marrynov/ui.
  */
 export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps): JSX.Element {
   const { name, description, startingPrice, imageUrl, imageAlt, featured, badge } = service;
-
   const headingId = `service-${service.id}-heading`;
 
   return (
@@ -30,17 +30,19 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
       className={cn(
         'relative flex flex-col overflow-hidden rounded-2xl bg-surface',
         'shadow-card transition-shadow duration-300 hover:shadow-card-hover',
-        featured && 'border-2 border-secondary',
-        !featured && 'border border-transparent',
+        featured ? 'border-2 border-secondary' : 'border border-transparent',
         className,
       )}
     >
       {/* Badge "Le plus demandé" */}
       {badge && (
         <div className="absolute top-0 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <span className="inline-flex items-center rounded-full bg-secondary px-4 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+          <Badge
+            variant="secondary"
+            className="px-4 py-1 text-xs uppercase tracking-wider rounded-full"
+          >
             {badge}
-          </span>
+          </Badge>
         </div>
       )}
 
@@ -70,19 +72,19 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
         <p className="mb-6 flex-1 text-base leading-relaxed text-text-subtle">{description}</p>
 
         {/* CTA */}
-        <Link
-          href={bookingUrl}
+        <Button
+          asChild
+          variant={featured ? 'default' : 'outline'}
+          size="pill"
           className={cn(
-            'flex items-center justify-center rounded-full py-3 text-base font-medium',
-            'transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2',
-            'focus-visible:outline-primary',
+            'w-full',
             featured
-              ? 'bg-primary text-white hover:bg-primary-dark'
+              ? 'hover:bg-primary-dark'
               : 'border-2 border-primary text-primary hover:bg-primary-light',
           )}
         >
-          Réserver
-        </Link>
+          <Link href={bookingUrl}>Réserver</Link>
+        </Button>
       </div>
     </article>
   );

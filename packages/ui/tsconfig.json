@@ -1,9 +1,14 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@marrynov/config-typescript/base.json",
   "compilerOptions": {
     "outDir": "dist-types",
     "rootDir": "src",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "types": ["react", "react-dom"],
+    "composite": false,
+    "declaration": false
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist-types"]
