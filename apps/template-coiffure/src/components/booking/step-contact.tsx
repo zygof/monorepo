@@ -215,7 +215,7 @@ export function StepContact({ state, dispatch }: StepContactProps) {
             aria-checked={contact.smsNotif}
             onClick={() => set('smsNotif', !contact.smsNotif)}
             className={cn(
-              'relative h-6 w-11 rounded-full transition-colors duration-200',
+              'inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
               contact.smsNotif ? 'bg-primary' : 'bg-border',
             )}
@@ -223,8 +223,8 @@ export function StepContact({ state, dispatch }: StepContactProps) {
           >
             <span
               className={cn(
-                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200',
-                contact.smsNotif ? 'translate-x-5.5' : 'translate-x-0.5',
+                'pointer-events-none h-5 w-5 rounded-full bg-white shadow-md ring-0 transition-transform duration-200',
+                contact.smsNotif ? 'translate-x-5' : 'translate-x-0',
               )}
               aria-hidden="true"
             />
