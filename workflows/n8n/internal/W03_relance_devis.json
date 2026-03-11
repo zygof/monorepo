@@ -1,0 +1,198 @@
+{
+  "name": "[MARRYNOV] - W03 Relance Devis en Attente",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron — Chaque matin 8h (lun-ven)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "notes": "Déclenché chaque matin du lundi au vendredi à 8h00 (heure Réunion). Vérifie tous les devis en attente de signature."
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "url": "=https://api.freebe.fr/v1/quotations?status=pending",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "freebe-devis",
+      "name": "Freebe — Récupérer Devis Pending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "freebe-api",
+          "name": "Freebe API Key"
+        }
+      },
+      "notes": "Récupère tous les devis avec statut 'pending' via l'API Freebe. Credential : Header Authorization: Bearer {API_KEY}. Adapter l'endpoint selon la version API Freebe utilisée."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtrer et catégoriser les devis selon leur ancienneté\nconst devis = $input.all().map(item => item.json);\nconst maintenant = new Date();\n\nconst devisCategories = {\n  urgents: [],   // +10 jours : relance finale + alerte interne\n  relance: [],   // +5 jours : email de relance\n  ok: []         // < 5 jours : rien à faire\n};\n\ndevis.forEach(d => {\n  const dateCreation = new Date(d.created_at || d.date);\n  const joursEcoules = Math.floor((maintenant - dateCreation) / (1000 * 60 * 60 * 24));\n  \n  const devisEnrichi = {\n    ...d,\n    joursEcoules,\n    dateCreationFr: dateCreation.toLocaleDateString('fr-FR'),\n    montantFormate: new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(d.amount || 0)\n  };\n  \n  if (joursEcoules >= 10) devisCategories.urgents.push(devisEnrichi);\n  else if (joursEcoules >= 5) devisCategories.relance.push(devisEnrichi);\n  else devisCategories.ok.push(devisEnrichi);\n});\n\nconsole.log(`Devis analysés : ${devis.length} total | ${devisCategories.urgents.length} urgents | ${devisCategories.relance.length} à relancer | ${devisCategories.ok.length} OK`);\n\n// Retourner tous les devis à traiter avec leur catégorie\nconst aTraiter = [\n  ...devisCategories.urgents.map(d => ({ ...d, categorie: 'urgent' })),\n  ...devisCategories.relance.map(d => ({ ...d, categorie: 'relance' }))\n];\n\nif (aTraiter.length === 0) {\n  return [{ json: { aucunDevis: true, message: 'Aucun devis à relancer ce matin.' } }];\n}\n\nreturn aTraiter.map(d => ({ json: d }));"
+      },
+      "id": "filter-devis",
+      "name": "Filtrer Devis par Ancienneté",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Catégorise les devis : URGENT (+10j) → email + alerte Discord, RELANCE (+5j) → email de suivi, OK (<5j) → ignoré."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-aucun",
+              "leftValue": "={{ $json.aucunDevis }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-aucun-devis",
+      "name": "Aucun devis à traiter ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "notes": "Si aucun devis à relancer, arrêt du workflow sans action."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.categorie }}",
+              "rightValue": "urgent",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "route-categorie",
+      "name": "Router par Catégorie",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 200],
+      "notes": "Branche URGENT → email relance finale + alerte Discord. Branche RELANCE → email relance simple."
+    },
+    {
+      "parameters": {
+        "fromEmail": "nicolas@marrynov.re",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "=Votre devis MARRYNOV — Dernière chance d'en profiter",
+        "emailType": "html",
+        "message": "=<h2>Votre projet mérite de voir le jour 🚀</h2>\n\n<p>Bonjour {{ $json.client.name }},</p>\n\n<p>Il y a {{ $json.joursEcoules }} jours, je vous ai envoyé un devis pour votre projet <strong>{{ $json.title }}</strong> d'un montant de <strong>{{ $json.montantFormate }}</strong>.</p>\n\n<p>Je reste disponible si vous avez des questions, des ajustements à demander, ou si vous souhaitez qu'on en discute de vive voix.</p>\n\n<p>👉 <a href=\"{{ $json.link }}\">Consulter et signer votre devis</a></p>\n\n<p>À votre disposition,<br><strong>Nicolas — MARRYNOV</strong></p>\n\n<p style=\"font-size:12px;color:#888\">PS : Si ce projet n'est plus d'actualité, n'hésitez pas à me le dire, je comprendrai tout à fait.</p>",
+        "options": {}
+      },
+      "id": "email-relance-urgente",
+      "name": "Email — Relance Urgente (+10j)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1340, 120],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    },
+    {
+      "parameters": {
+        "webhookUri": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "text": "=⚠️ **Devis en attente depuis +10 jours**\n\n**Client :** {{ $json.client.name }}\n**Devis :** {{ $json.title }}\n**Montant :** {{ $json.montantFormate }}\n**En attente depuis :** {{ $json.joursEcoules }} jours\n\nRelance finale envoyée par email. Si pas de réponse aujourd'hui → archiver le devis."
+      },
+      "id": "discord-urgent",
+      "name": "Discord — Alerte Devis Urgent",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [1340, 260],
+      "credentials": {
+        "discordWebhookApi": { "id": "discord-webhook", "name": "Discord Webhook MARRYNOV" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "nicolas@marrynov.re",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "=Votre devis MARRYNOV — Avez-vous des questions ?",
+        "emailType": "html",
+        "message": "=<h2>Un point sur votre projet 👋</h2>\n\n<p>Bonjour {{ $json.client.name }},</p>\n\n<p>Je me permets de reprendre contact concernant le devis envoyé le <strong>{{ $json.dateCreationFr }}</strong> pour votre projet <strong>{{ $json.title }}</strong> (<strong>{{ $json.montantFormate }}</strong>).</p>\n\n<p>Avez-vous eu le temps de le consulter ? Y a-t-il des ajustements à apporter ?</p>\n\n<p>👉 <a href=\"{{ $json.link }}\">Consulter votre devis</a></p>\n\n<p>N'hésitez pas à me contacter directement,<br><strong>Nicolas — MARRYNOV</strong><br>📞 +262 692 00 00 00</p>",
+        "options": {}
+      },
+      "id": "email-relance-simple",
+      "name": "Email — Relance Simple (+5j)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1340, 420],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — Chaque matin 8h (lun-ven)": {
+      "main": [[{ "node": "Freebe — Récupérer Devis Pending", "type": "main", "index": 0 }]]
+    },
+    "Freebe — Récupérer Devis Pending": {
+      "main": [[{ "node": "Filtrer Devis par Ancienneté", "type": "main", "index": 0 }]]
+    },
+    "Filtrer Devis par Ancienneté": {
+      "main": [[{ "node": "Aucun devis à traiter ?", "type": "main", "index": 0 }]]
+    },
+    "Aucun devis à traiter ?": {
+      "main": [[], [{ "node": "Router par Catégorie", "type": "main", "index": 0 }]]
+    },
+    "Router par Catégorie": {
+      "main": [
+        [
+          { "node": "Email — Relance Urgente (+10j)", "type": "main", "index": 0 },
+          { "node": "Discord — Alerte Devis Urgent", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Email — Relance Simple (+5j)", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["MARRYNOV", "internal", "facturation"],
+  "testData": {
+    "devisUrgent": {
+      "id": "devis-001",
+      "title": "Site vitrine Salon Marie",
+      "amount": 1500,
+      "created_at": "2026-02-25T10:00:00Z",
+      "client": { "name": "Marie Dupont", "email": "marie@example.re" },
+      "link": "https://app.freebe.fr/quotations/devis-001"
+    }
+  }
+}

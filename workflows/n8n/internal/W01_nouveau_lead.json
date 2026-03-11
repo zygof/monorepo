@@ -1,0 +1,115 @@
+{
+  "name": "[MARRYNOV] - W01 Alerte Nouveau Lead",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nouveau-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — Formulaire Contact",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Reçoit les données du formulaire de contact marrynov.re via POST JSON.\nChamps attendus : nom, email, telephone, secteur, message, budget."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.body || $input.first().json;\n\nlet score = 0;\nconst raisons = [];\n\n// Budget\nconst budget = parseInt(data.budget) || 0;\nif (budget >= 3000) { score += 40; raisons.push('Budget \u2265 3000\u20ac (+40)'); }\nelse if (budget >= 1500) { score += 25; raisons.push('Budget \u2265 1500\u20ac (+25)'); }\nelse if (budget >= 500) { score += 10; raisons.push('Budget \u2265 500\u20ac (+10)'); }\n\n// Secteur\nconst secteursPrioritaires = ['restaurant', 'pizzeria', 'coiffure', 'boutique', 'ecommerce'];\nconst secteur = (data.secteur || '').toLowerCase();\nif (secteursPrioritaires.includes(secteur)) { score += 20; raisons.push('Secteur prioritaire : ' + secteur + ' (+20)'); }\nelse if (secteur) { score += 10; raisons.push('Secteur : ' + secteur + ' (+10)'); }\n\n// Telephone\nif (data.telephone && data.telephone.length > 8) { score += 15; raisons.push('Telephone fourni (+15)'); }\n\n// Message\nif (data.message && data.message.length > 100) { score += 15; raisons.push('Message detaille (+15)'); }\nelse if (data.message && data.message.length > 30) { score += 5; raisons.push('Message court (+5)'); }\n\n// Urgence\nconst motsUrgence = ['urgent', 'rapidement', 'vite', 'des que possible', 'asap'];\nif (motsUrgence.some(m => (data.message || '').toLowerCase().includes(m))) {\n  score += 10;\n  raisons.push('Urgence detectee (+10)');\n}\n\nlet priorite, emoji;\nif (score >= 70) { priorite = 'HOT'; emoji = '\ud83d\udd25'; }\nelse if (score >= 40) { priorite = 'WARM'; emoji = '\u26a1'; }\nelse { priorite = 'COLD'; emoji = '\ud83e\uddca'; }\n\nreturn [{\n  json: {\n    nom: data.nom || data.name || 'Inconnu',\n    email: data.email || '',\n    telephone: data.telephone || data.phone || 'Non renseigne',\n    secteur: data.secteur || 'Non precise',\n    message: data.message || data.description || '',\n    budget: data.budget || 'Non precise',\n    score,\n    priorite,\n    emoji,\n    raisons: raisons.join(' | '),\n    dateReception: new Date().toLocaleString('fr-FR', { timeZone: 'Indian/Reunion' })\n  }\n}];"
+      },
+      "id": "score-lead",
+      "name": "Calcul Score Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Score 0-100 : budget (40pts), secteur (20pts), telephone (15pts), message (15pts), urgence (10pts).\nHOT >=70 | WARM >=40 | COLD <40"
+    },
+    {
+      "parameters": {
+        "fromEmail": "nicolas@marrynov.re",
+        "toEmail": "nicolas@marrynov.re",
+        "subject": "={{ $json.emoji }} Nouveau lead [{{ $json.priorite }}] — {{ $json.nom }} ({{ $json.secteur }})",
+        "emailType": "html",
+        "message": "=<h2>{{ $json.emoji }} Nouveau lead {{ $json.priorite }} — Score {{ $json.score }}/100</h2>\n<p><strong>Criteres :</strong> {{ $json.raisons }}</p>\n<hr>\n<h3>Contact</h3>\n<ul>\n  <li><strong>Nom :</strong> {{ $json.nom }}</li>\n  <li><strong>Email :</strong> <a href=\"mailto:{{ $json.email }}\">{{ $json.email }}</a></li>\n  <li><strong>Telephone :</strong> {{ $json.telephone }}</li>\n  <li><strong>Secteur :</strong> {{ $json.secteur }}</li>\n  <li><strong>Budget :</strong> {{ $json.budget }}</li>\n</ul>\n<h3>Message</h3>\n<blockquote style=\"border-left:3px solid #ccc;padding-left:12px;color:#555\">{{ $json.message }}</blockquote>\n<p style=\"color:#888;font-size:12px\">Recu le {{ $json.dateReception }}</p>",
+        "options": {}
+      },
+      "id": "email-notification",
+      "name": "Email — Notification Nicolas",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [680, 200],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      },
+      "notes": "Email envoye a nicolas@marrynov.re avec le score et tous les details du lead."
+    },
+    {
+      "parameters": {
+        "team": "TEAM_ID_LINEAR",
+        "title": "=Lead {{ $json.emoji }} {{ $json.priorite }} — {{ $json.nom }} ({{ $json.secteur }})",
+        "description": "=## {{ $json.emoji }} Lead {{ $json.priorite }} — Score {{ $json.score }}/100\n\n**Criteres :** {{ $json.raisons }}\n\n---\n\n### Contact\n- **Nom :** {{ $json.nom }}\n- **Email :** {{ $json.email }}\n- **Telephone :** {{ $json.telephone }}\n- **Secteur :** {{ $json.secteur }}\n- **Budget :** {{ $json.budget }}\n\n### Message\n{{ $json.message }}\n\n---\n*Recu le {{ $json.dateReception }} via formulaire marrynov.re*",
+        "priority": "={{ $json.score >= 70 ? 1 : $json.score >= 40 ? 2 : 3 }}"
+      },
+      "id": "linear-ticket",
+      "name": "Linear — Creer Ticket",
+      "type": "n8n-nodes-base.linear",
+      "typeVersion": 1,
+      "position": [680, 420],
+      "credentials": {
+        "linearApi": {
+          "id": "linear-api",
+          "name": "Linear API"
+        }
+      },
+      "notes": "Cree un ticket dans Linear.\nPriorite auto : 1=urgent (HOT), 2=high (WARM), 3=medium (COLD).\nREMPLACER 'TEAM_ID_LINEAR' par ton vrai Team ID (visible dans Linear > Settings > API)."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "webhook-response",
+      "name": "Reponse Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 600],
+      "notes": "Retourne 200 immediatement au site. L'email et le ticket Linear s'executent en parallele."
+    }
+  ],
+  "connections": {
+    "Webhook — Formulaire Contact": {
+      "main": [[{ "node": "Calcul Score Lead", "type": "main", "index": 0 }]]
+    },
+    "Calcul Score Lead": {
+      "main": [
+        [
+          { "node": "Email — Notification Nicolas", "type": "main", "index": 0 },
+          { "node": "Linear — Creer Ticket", "type": "main", "index": 0 },
+          { "node": "Reponse Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["MARRYNOV", "internal", "leads"],
+  "testData": {
+    "description": "Donnees de test pour le webhook",
+    "body": {
+      "nom": "Marie Dupont",
+      "email": "marie.dupont@example.re",
+      "telephone": "0692 12 34 56",
+      "secteur": "coiffure",
+      "message": "Bonjour, je cherche a creer un site vitrine pour mon salon de coiffure avec un systeme de reservation en ligne. Je souhaite lancer rapidement.",
+      "budget": "2000"
+    }
+  }
+}

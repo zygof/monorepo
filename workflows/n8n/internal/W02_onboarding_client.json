@@ -1,0 +1,182 @@
+{
+  "name": "[MARRYNOV] - W02 Onboarding Nouveau Client",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "freebe-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "freebe-trigger",
+      "name": "Webhook — Freebe Facture Payée",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Reçoit le webhook Freebe quand une facture est marquée 'payée'. Payload attendu : { client: { nom, email, telephone, secteur }, facture: { numero, montant, date } }. Configurer dans Freebe : Paramètres > Webhooks > Ajouter."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Préparer les données d'onboarding client\nconst data = $input.first().json.body || $input.first().json;\n\nconst client = data.client || {};\nconst facture = data.facture || {};\n\n// Générer le slug client : prenom-secteur\nconst prenom = (client.nom || '').split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');\nconst secteur = (client.secteur || 'web').toLowerCase().replace(/[^a-z]/g, '');\nconst slug = `${prenom}-${secteur}`;\n\n// Templates secteur disponibles\nconst templateMap = {\n  coiffure: 'template-coiffure',\n  restaurant: 'template-restaurant',\n  pizza: 'template-pizza',\n  pizzeria: 'template-pizza',\n  boutique: 'template-boutique',\n  ecommerce: 'template-boutique',\n  voiture: 'template-location-voiture'\n};\nconst template = templateMap[secteur] || 'template-restaurant';\n\nconst dateOnboarding = new Date().toLocaleDateString('fr-FR', { timeZone: 'Indian/Reunion', day: '2-digit', month: 'long', year: 'numeric' });\n\nreturn [{\n  json: {\n    slug,\n    template,\n    dateOnboarding,\n    repoName: `client-${slug}`,\n    repoUrl: `https://github.com/marrynov/client-${slug}`,\n    sousDomaineDemo: `${secteur}.marrynov.re`,\n    client: {\n      nom: client.nom || 'Client',\n      email: client.email,\n      telephone: client.telephone,\n      secteur: client.secteur || secteur\n    },\n    facture: {\n      numero: facture.numero || 'N/A',\n      montant: facture.montant || 0,\n      date: facture.date || dateOnboarding\n    }\n  }\n}];"
+      },
+      "id": "prepare-data",
+      "name": "Préparer Données Client",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Génère le slug client (prenom-secteur), sélectionne le template adapté au secteur, prépare toutes les données pour les étapes suivantes."
+    },
+    {
+      "parameters": {
+        "fromEmail": "nicolas@marrynov.re",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "Bienvenue chez MARRYNOV — Votre projet démarre !",
+        "emailType": "html",
+        "message": "=<h1>Bienvenue {{ $json.client.nom }} ! 🎉</h1>\n\n<p>Votre paiement a bien été reçu. Je suis ravi de vous compter parmi mes clients et de démarrer votre projet <strong>{{ $json.client.secteur }}</strong> ensemble.</p>\n\n<h2>Prochaines étapes</h2>\n<ol>\n  <li>Je vous contacterai sous <strong>24h</strong> pour planifier notre premier appel de cadrage</li>\n  <li>Vous recevrez un accès à votre espace de suivi de projet</li>\n  <li>La démo sera disponible sur <a href=\"http://{{ $json.sousDomaineDemo }}\">{{ $json.sousDomaineDemo }}</a></li>\n</ol>\n\n<h2>Votre récapitulatif</h2>\n<ul>\n  <li><strong>Facture N° :</strong> {{ $json.facture.numero }}</li>\n  <li><strong>Montant :</strong> {{ $json.facture.montant }}€</li>\n  <li><strong>Date :</strong> {{ $json.facture.date }}</li>\n</ul>\n\n<p>À très bientôt,<br><strong>Nicolas — MARRYNOV</strong><br>📞 <a href=\"tel:+262692000000\">+262 692 00 00 00</a><br>🌐 <a href=\"https://marrynov.re\">marrynov.re</a></p>\n\n<hr>\n<p style=\"font-size:12px;color:#888\">MARRYNOV — Ici pour vous développer. | La Réunion</p>",
+        "options": {}
+      },
+      "id": "email-bienvenue",
+      "name": "Email — Bienvenue Client",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [680, 160],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      },
+      "notes": "Email de bienvenue personnalisé avec les prochaines étapes. Envoyé immédiatement après validation du paiement."
+    },
+    {
+      "parameters": {
+        "resource": "repository",
+        "operation": "create",
+        "org": "marrynov",
+        "name": "={{ $json.repoName }}",
+        "description": "=Site {{ $json.client.secteur }} — {{ $json.client.nom }} | Template {{ $json.template }} | Créé le {{ $json.dateOnboarding }}",
+        "privateRepo": true,
+        "autoInit": false
+      },
+      "id": "github-repo",
+      "name": "GitHub — Créer Repo Client",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "githubApi": {
+          "id": "github-token",
+          "name": "GitHub PAT MARRYNOV"
+        }
+      },
+      "notes": "Crée le repo privé dans l'org GitHub marrynov. Le nom suit la convention client-[prenom]-[secteur]. Credential : GitHub Personal Access Token avec scope repo + org."
+    },
+    {
+      "parameters": {
+        "team": "={{ $env.LINEAR_TEAM_ID }}",
+        "title": "=Onboarding {{ $json.client.nom }} — {{ $json.client.secteur }}",
+        "description": "=## Nouveau client onboardé 🎉\n\n**Client :** {{ $json.client.nom }}  \n**Email :** {{ $json.client.email }}  \n**Secteur :** {{ $json.client.secteur }}  \n**Slug :** `{{ $json.slug }}`\n\n---\n\n## Checklist onboarding\n\n- [ ] Repo GitHub créé : `marrynov/{{ $json.repoName }}`\n- [ ] Template initialisé depuis `{{ $json.template }}`\n- [ ] Config client : `config/client.config.ts` mis à jour\n- [ ] Démo déployée : `{{ $json.sousDomaineDemo }}`\n- [ ] Premier appel de cadrage planifié\n- [ ] Accès Google Workspace configuré\n\n---\n\n**Facture :** N°{{ $json.facture.numero }} — {{ $json.facture.montant }}€  \n*Onboarding démarré le {{ $json.dateOnboarding }}*",
+        "priority": 1
+      },
+      "id": "linear-onboarding",
+      "name": "Linear — Ticket Onboarding",
+      "type": "n8n-nodes-base.linear",
+      "typeVersion": 1,
+      "position": [680, 440],
+      "credentials": {
+        "linearApi": {
+          "id": "linear-api",
+          "name": "Linear API"
+        }
+      },
+      "notes": "Crée un ticket d'onboarding avec la checklist complète dans Linear. Priorité Urgent car le client vient de payer."
+    },
+    {
+      "parameters": {
+        "webhookUri": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "text": "=🎉 **Nouveau client onboardé !**\n\n**Client :** {{ $json.client.nom }}\n**Secteur :** {{ $json.client.secteur }}\n**Montant :** {{ $json.facture.montant }}€\n**Repo :** [{{ $json.repoName }}]({{ $json.repoUrl }})\n**Démo :** http://{{ $json.sousDomaineDemo }}\n\n✅ Email de bienvenue envoyé\n✅ Repo GitHub créé\n✅ Ticket Linear créé\n\n➡️ Prochaine étape : initialiser le template `{{ $json.template }}`"
+      },
+      "id": "discord-notification",
+      "name": "Discord — Notification Interne",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "discord-webhook",
+          "name": "Discord Webhook MARRYNOV"
+        }
+      },
+      "notes": "Récapitulatif Discord pour Nicolas avec toutes les actions effectuées et la prochaine étape."
+    },
+    {
+      "parameters": {
+        "errorMessage": "=Erreur W02 Onboarding : {{ $json.message }}"
+      },
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 520]
+    },
+    {
+      "parameters": {
+        "webhookUri": "={{ $env.DISCORD_WEBHOOK_URL }}",
+        "text": "=🚨 **Erreur W02 — Onboarding Client**\n\nErreur : {{ $json.error.message }}\n⚠️ Vérifier manuellement l'onboarding du client !"
+      },
+      "id": "discord-error",
+      "name": "Discord — Alerte Erreur",
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [460, 520],
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "discord-webhook",
+          "name": "Discord Webhook MARRYNOV"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Freebe Facture Payée": {
+      "main": [[{ "node": "Préparer Données Client", "type": "main", "index": 0 }]]
+    },
+    "Préparer Données Client": {
+      "main": [
+        [
+          { "node": "Email — Bienvenue Client", "type": "main", "index": 0 },
+          { "node": "GitHub — Créer Repo Client", "type": "main", "index": 0 },
+          { "node": "Linear — Ticket Onboarding", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Email — Bienvenue Client": {
+      "main": [[{ "node": "Discord — Notification Interne", "type": "main", "index": 0 }]]
+    },
+    "Error Trigger": {
+      "main": [[{ "node": "Discord — Alerte Erreur", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["MARRYNOV", "internal", "onboarding"],
+  "testData": {
+    "webhook": {
+      "body": {
+        "client": {
+          "nom": "Marie Dupont",
+          "email": "marie.dupont@example.re",
+          "telephone": "0692 12 34 56",
+          "secteur": "coiffure"
+        },
+        "facture": {
+          "numero": "2024-001",
+          "montant": 1500,
+          "date": "09/03/2026"
+        }
+      }
+    }
+  }
+}

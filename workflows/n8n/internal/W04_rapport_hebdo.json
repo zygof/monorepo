@@ -1,0 +1,125 @@
+{
+  "name": "[MARRYNOV] - W04 Rapport Hebdomadaire",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "cron-lundi",
+      "name": "Cron — Lundi 7h00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "notes": "Déclenché chaque lundi à 7h00 heure Réunion. Génère le rapport de la semaine précédente (lun-dim)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculer les dates de la semaine précédente\nconst maintenant = new Date();\nconst lundiCette = new Date(maintenant);\nlundiCette.setDate(maintenant.getDate() - maintenant.getDay() + 1);\n\nconst lundiPrecedent = new Date(lundiCette);\nlundiPrecedent.setDate(lundiCette.getDate() - 7);\nconst dimanchePrecedent = new Date(lundiPrecedent);\ndimanchePrecedent.setDate(lundiPrecedent.getDate() + 6);\n\nconst formatDate = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });\n\nreturn [{\n  json: {\n    semaine: `${formatDate(lundiPrecedent)} – ${formatDate(dimanchePrecedent)}`,\n    debutISO: lundiPrecedent.toISOString(),\n    finISO: dimanchePrecedent.toISOString(),\n    annee: maintenant.getFullYear(),\n    numeroSemaine: Math.ceil((maintenant - new Date(maintenant.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000))\n  }\n}];"
+      },
+      "id": "calc-dates",
+      "name": "Calculer Période S-1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Calcule les dates ISO de début et fin de la semaine précédente pour les requêtes API."
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "url": "=https://api.freebe.fr/v1/invoices?status=paid&from={{ $json.debutISO }}&to={{ $json.finISO }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "freebe-ca",
+      "name": "Freebe — CA Semaine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 180],
+      "credentials": {
+        "httpHeaderAuth": { "id": "freebe-api", "name": "Freebe API Key" }
+      },
+      "notes": "Récupère les factures payées sur la semaine pour calculer le CA."
+    },
+    {
+      "parameters": {
+        "resource": "issue",
+        "operation": "getAll",
+        "filters": {
+          "updatedAfter": "={{ $('Calculer Période S-1').first().json.debutISO }}"
+        }
+      },
+      "id": "linear-tickets",
+      "name": "Linear — Tickets Semaine",
+      "type": "n8n-nodes-base.linear",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "linearApi": { "id": "linear-api", "name": "Linear API" }
+      },
+      "notes": "Récupère les tickets Linear mis à jour cette semaine pour la synthèse activité."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Consolider toutes les données du rapport\nconst dates = $('Calculer Période S-1').first().json;\nconst factures = $('Freebe — CA Semaine').all().map(i => i.json);\nconst tickets = $('Linear — Tickets Semaine').all().map(i => i.json);\n\n// CA semaine\nconst caSemaine = factures.reduce((sum, f) => sum + (f.amount || 0), 0);\nconst nbFactures = factures.length;\n\n// Analyse tickets Linear\nconst ticketsParStatut = {};\ntickets.forEach(t => {\n  const statut = t.state?.name || 'Inconnu';\n  ticketsParStatut[statut] = (ticketsParStatut[statut] || 0) + 1;\n});\nconst ticketsDone = ticketsParStatut['Done'] || ticketsParStatut['Terminé'] || 0;\nconst ticketsEnCours = ticketsParStatut['In Progress'] || ticketsParStatut['En cours'] || 0;\nconst ticketsOuverts = Object.values(ticketsParStatut).reduce((a,b) => a+b, 0);\n\n// Formatage\nconst formatEuro = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);\n\nconst statutsTable = Object.entries(ticketsParStatut)\n  .map(([k,v]) => `| ${k} | ${v} |`).join('\\n');\n\nreturn [{\n  json: {\n    semaine: dates.semaine,\n    numeroSemaine: dates.numeroSemaine,\n    caSemaine: formatEuro(caSemaine),\n    caRaw: caSemaine,\n    nbFactures,\n    ticketsOuverts,\n    ticketsDone,\n    ticketsEnCours,\n    statutsTable,\n    clients: factures.map(f => f.client?.name || 'N/A').join(', ') || 'Aucun'\n  }\n}];"
+      },
+      "id": "consolidate",
+      "name": "Consolider Données Rapport",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "notes": "Agrège CA Freebe + activité Linear pour générer les métriques du rapport hebdomadaire."
+    },
+    {
+      "parameters": {
+        "fromEmail": "nicolas@marrynov.re",
+        "toEmail": "nicolas@marrynov.re",
+        "subject": "=📊 Rapport MARRYNOV — Semaine {{ $json.numeroSemaine }} ({{ $json.semaine }})",
+        "emailType": "html",
+        "message": "=<h1>📊 Rapport hebdomadaire MARRYNOV</h1>\n<p><strong>Semaine {{ $json.numeroSemaine }}</strong> — {{ $json.semaine }}</p>\n\n<h2>💰 Chiffre d'affaires</h2>\n<table style=\"border-collapse:collapse;width:100%\">\n  <tr style=\"background:#f5f5f5\">\n    <td style=\"padding:8px;border:1px solid #ddd\"><strong>CA encaissé</strong></td>\n    <td style=\"padding:8px;border:1px solid #ddd\">{{ $json.caSemaine }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px;border:1px solid #ddd\">Factures payées</td>\n    <td style=\"padding:8px;border:1px solid #ddd\">{{ $json.nbFactures }}</td>\n  </tr>\n  <tr style=\"background:#f5f5f5\">\n    <td style=\"padding:8px;border:1px solid #ddd\">Clients facturés</td>\n    <td style=\"padding:8px;border:1px solid #ddd\">{{ $json.clients }}</td>\n  </tr>\n</table>\n\n<h2>🎯 Activité Linear</h2>\n<table style=\"border-collapse:collapse;width:100%\">\n  <tr style=\"background:#f5f5f5\">\n    <td style=\"padding:8px;border:1px solid #ddd\"><strong>Tickets terminés</strong></td>\n    <td style=\"padding:8px;border:1px solid #ddd\">{{ $json.ticketsDone }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:8px;border:1px solid #ddd\">En cours</td>\n    <td style=\"padding:8px;border:1px solid #ddd\">{{ $json.ticketsEnCours }}</td>\n  </tr>\n  <tr style=\"background:#f5f5f5\">\n    <td style=\"padding:8px;border:1px solid #ddd\">Total actifs</td>\n    <td style=\"padding:8px;border:1px solid #ddd\">{{ $json.ticketsOuverts }}</td>\n  </tr>\n</table>\n\n<hr>\n<p style=\"font-size:12px;color:#888\">Rapport généré automatiquement par n8n MARRYNOV — {{ $now.format('dd/MM/yyyy HH:mm') }}</p>",
+        "options": {}
+      },
+      "id": "email-rapport",
+      "name": "Email — Rapport Hebdo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1120, 300],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — Lundi 7h00": {
+      "main": [[{ "node": "Calculer Période S-1", "type": "main", "index": 0 }]]
+    },
+    "Calculer Période S-1": {
+      "main": [
+        [
+          { "node": "Freebe — CA Semaine", "type": "main", "index": 0 },
+          { "node": "Linear — Tickets Semaine", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Freebe — CA Semaine": {
+      "main": [[{ "node": "Consolider Données Rapport", "type": "main", "index": 0 }]]
+    },
+    "Linear — Tickets Semaine": {
+      "main": [[{ "node": "Consolider Données Rapport", "type": "main", "index": 0 }]]
+    },
+    "Consolider Données Rapport": {
+      "main": [[{ "node": "Email — Rapport Hebdo", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["MARRYNOV", "internal", "reporting"]
+}

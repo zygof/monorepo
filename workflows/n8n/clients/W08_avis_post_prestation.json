@@ -1,0 +1,110 @@
+{
+  "name": "[TOUS SECTEURS] - W08 Avis Client Post-Prestation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "prestation-terminee",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-prestation",
+      "name": "Webhook — Prestation Terminée",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Déclenché quand une commande/RDV est marqué 'terminé' dans l'app. Payload : { prestation: { id, type, description, date }, client: { nom, email }, config: { nomEtablissement, urlAvisGoogle, urlAvisInterne, emailExpedition } }."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.body || $input.first().json;\n\n// Email à envoyer 24h après la prestation\nconst datePrestation = new Date(data.prestation?.date || new Date());\nconst dateAvis = new Date(datePrestation.getTime() + 24 * 60 * 60 * 1000);\n\n// Si la prestation est passée, envoyer dans 1h quand même\nconst maintenant = new Date();\nconst dateEnvoi = dateAvis < maintenant \n  ? new Date(maintenant.getTime() + 60 * 60 * 1000) \n  : dateAvis;\n\nreturn [{\n  json: {\n    prestation: data.prestation,\n    client: data.client,\n    config: {\n      nomEtablissement: data.config?.nomEtablissement || 'Notre établissement',\n      urlAvisGoogle: data.config?.urlAvisGoogle || '',\n      urlAvisInterne: data.config?.urlAvisInterne || '',\n      emailExpedition: data.config?.emailExpedition || 'noreply@marrynov.re'\n    },\n    dateEnvoi: dateEnvoi.toISOString(),\n    delaiSecondes: Math.max(0, Math.floor((dateEnvoi - maintenant) / 1000))\n  }\n}];"
+      },
+      "id": "calc-timing",
+      "name": "Calculer Timing Envoi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "ack",
+      "name": "ACK 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 160]
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.delaiSecondes }}",
+        "unit": "seconds"
+      },
+      "id": "wait-24h",
+      "name": "Attendre 24h Post-Prestation",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 300],
+      "notes": "Attend 24h après la prestation pour laisser le client profiter du service avant de demander un avis."
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.config.emailExpedition }}",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "=Votre avis compte pour nous — {{ $json.config.nomEtablissement }}",
+        "emailType": "html",
+        "message": "=<h2>Merci pour votre confiance ! ⭐</h2>\n\n<p>Bonjour <strong>{{ $json.client.nom }}</strong>,</p>\n\n<p>Nous espérons que vous avez apprécié votre {{ $json.prestation.type || 'prestation' }} chez <strong>{{ $json.config.nomEtablissement }}</strong>.</p>\n\n<p>Votre avis nous aide à nous améliorer et à accueillir de nouveaux clients. Cela ne prend que 30 secondes !</p>\n\n<div style=\"text-align:center;margin:32px 0\">\n  {{ $json.config.urlAvisGoogle ? '<a href=\"' + $json.config.urlAvisGoogle + '\" style=\"background:#4285F4;color:#fff;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;margin:8px\">⭐ Laisser un avis Google</a>' : '' }}\n  {{ $json.config.urlAvisInterne ? '<a href=\"' + $json.config.urlAvisInterne + '\" style=\"background:#000;color:#fff;padding:14px 28px;text-decoration:none;border-radius:6px;font-size:16px;margin:8px\">💬 Donner mon avis</a>' : '' }}\n</div>\n\n<p>Merci d'avance pour votre temps,<br><strong>{{ $json.config.nomEtablissement }}</strong></p>\n\n<hr>\n<p style=\"font-size:11px;color:#aaa\">Si vous ne souhaitez plus recevoir ces emails, <a href=\"#\">cliquez ici</a>.</p>",
+        "options": {}
+      },
+      "id": "email-avis",
+      "name": "Email — Demande d'Avis",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [900, 300],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Prestation Terminée": {
+      "main": [[{ "node": "Calculer Timing Envoi", "type": "main", "index": 0 }]]
+    },
+    "Calculer Timing Envoi": {
+      "main": [
+        [
+          { "node": "ACK 200", "type": "main", "index": 0 },
+          { "node": "Attendre 24h Post-Prestation", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Attendre 24h Post-Prestation": {
+      "main": [[{ "node": "Email — Demande d'Avis", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["clients", "avis", "reputation"],
+  "testData": {
+    "webhook": {
+      "body": {
+        "prestation": {
+          "id": "rdv-001",
+          "type": "Coupe + Coiffage",
+          "date": "2026-03-09T14:30:00.000Z"
+        },
+        "client": { "nom": "Sophie Martin", "email": "sophie@example.re" },
+        "config": {
+          "nomEtablissement": "Salon Marie Beauté",
+          "urlAvisGoogle": "https://g.page/r/xxx/review",
+          "urlAvisInterne": "https://marie-coiffure.marrynov.re/avis",
+          "emailExpedition": "marie@salon.re"
+        }
+      }
+    }
+  }
+}

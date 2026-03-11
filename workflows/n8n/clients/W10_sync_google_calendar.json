@@ -1,0 +1,140 @@
+{
+  "name": "[COIFFURE/RESTAURANT] - W10 Sync Google Calendar",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nouvelle-reservation",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-reservation",
+      "name": "Webhook — Nouvelle Réservation",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Reçoit les données d'une nouvelle réservation. Payload : { rdv: { id, date, heure, duree, service }, client: { nom, email, telephone }, config: { calendarId, nomEtablissement, adresse, couleur, emailGerant } }. Duree en minutes."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.body || $input.first().json;\n\nconst rdv = data.rdv;\nconst client = data.client;\nconst config = data.config || {};\n\n// Construire les dates ISO pour Google Calendar\nconst dateDebut = new Date(`${rdv.date}T${rdv.heure}:00`);\nconst dateFin = new Date(dateDebut.getTime() + (rdv.duree || 60) * 60 * 1000);\n\nconst dateDebutFr = dateDebut.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Indian/Reunion' });\nconst heureDebutFr = dateDebut.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' });\nconst heureFinFr = dateFin.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' });\n\nreturn [{\n  json: {\n    rdv: {\n      ...rdv,\n      dateDebutISO: dateDebut.toISOString(),\n      dateFinISO: dateFin.toISOString(),\n      dateDebutFr,\n      heureDebutFr,\n      heureFinFr\n    },\n    client,\n    config: {\n      calendarId: config.calendarId || 'primary',\n      nomEtablissement: config.nomEtablissement || 'Établissement',\n      adresse: config.adresse || '',\n      couleur: config.couleur || '9', // Vert par défaut\n      emailGerant: config.emailGerant || ''\n    }\n  }\n}];"
+      },
+      "id": "prepare-event",
+      "name": "Préparer Événement Calendar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Construit les données de l'événement Google Calendar. Couleurs disponibles : 1=lavande, 2=sauge, 3=raisin, 4=flamant, 5=banane, 6=mandarine, 7=paon, 9=myrtille, 10=basilic, 11=tomate."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "ack",
+      "name": "ACK 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 160]
+    },
+    {
+      "parameters": {
+        "calendar": { "value": "={{ $json.config.calendarId }}", "mode": "id" },
+        "start": "={{ $json.rdv.dateDebutISO }}",
+        "end": "={{ $json.rdv.dateFinISO }}",
+        "summary": "=RDV {{ $json.client.nom }} — {{ $json.rdv.service }}",
+        "description": "=**Client :** {{ $json.client.nom }}\n**Email :** {{ $json.client.email }}\n**Téléphone :** {{ $json.client.telephone }}\n**Service :** {{ $json.rdv.service }}\n**Durée :** {{ $json.rdv.duree || 60 }} min\n\nRéservation automatique depuis {{ $json.config.nomEtablissement }}",
+        "location": "={{ $json.config.adresse }}",
+        "colorId": "={{ $json.config.couleur }}",
+        "attendees": "={{ $json.client.email }}",
+        "sendUpdates": "all",
+        "additionalFields": {
+          "reminders": {
+            "useDefault": false,
+            "overrides": [
+              { "method": "email", "minutes": 1440 },
+              { "method": "popup", "minutes": 30 }
+            ]
+          }
+        }
+      },
+      "id": "gcal-create",
+      "name": "Google Calendar — Créer Événement",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [680, 300],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "google-calendar-oauth",
+          "name": "Google Calendar OAuth2"
+        }
+      },
+      "notes": "Crée l'événement dans le Google Calendar du gérant. L'option sendUpdates=all envoie automatiquement une invitation email au client (attendees). Credential : OAuth2 Google Calendar, scope calendar."
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@marrynov.re",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "=Confirmation de votre réservation — {{ $json.config.nomEtablissement }}",
+        "emailType": "html",
+        "message": "=<h2>✅ Réservation confirmée !</h2>\n\n<p>Bonjour <strong>{{ $json.client.nom }}</strong>,</p>\n<p>Votre réservation chez <strong>{{ $json.config.nomEtablissement }}</strong> est confirmée :</p>\n\n<table style=\"border-collapse:collapse;margin:16px 0\">\n  <tr><td style=\"padding:8px;font-weight:bold\">📅 Date :</td><td style=\"padding:8px\">{{ $json.rdv.dateDebutFr }}</td></tr>\n  <tr style=\"background:#f9f9f9\"><td style=\"padding:8px;font-weight:bold\">⏰ Horaire :</td><td style=\"padding:8px\">{{ $json.rdv.heureDebutFr }} → {{ $json.rdv.heureFinFr }}</td></tr>\n  <tr><td style=\"padding:8px;font-weight:bold\">✂️ Service :</td><td style=\"padding:8px\">{{ $json.rdv.service }}</td></tr>\n  {{ $json.config.adresse ? '<tr style=\"background:#f9f9f9\"><td style=\"padding:8px;font-weight:bold\">📍 Adresse :</td><td style=\"padding:8px\">' + $json.config.adresse + '</td></tr>' : '' }}\n</table>\n\n<p>Un événement a été ajouté à votre calendrier.</p>\n<p>À très bientôt,<br><strong>{{ $json.config.nomEtablissement }}</strong></p>",
+        "options": {}
+      },
+      "id": "email-confirmation",
+      "name": "Email — Confirmation Client",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [900, 300],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Nouvelle Réservation": {
+      "main": [[{ "node": "Préparer Événement Calendar", "type": "main", "index": 0 }]]
+    },
+    "Préparer Événement Calendar": {
+      "main": [
+        [
+          { "node": "ACK 200", "type": "main", "index": 0 },
+          { "node": "Google Calendar — Créer Événement", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Google Calendar — Créer Événement": {
+      "main": [[{ "node": "Email — Confirmation Client", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["clients", "coiffure", "restaurant", "calendar"],
+  "testData": {
+    "webhook": {
+      "body": {
+        "rdv": {
+          "id": "rdv-001",
+          "date": "2026-03-20",
+          "heure": "14:00",
+          "duree": 90,
+          "service": "Coupe + Coiffage + Coloration"
+        },
+        "client": {
+          "nom": "Sophie Martin",
+          "email": "sophie@example.re",
+          "telephone": "+262692123456"
+        },
+        "config": {
+          "calendarId": "primary",
+          "nomEtablissement": "Salon Marie Beauté",
+          "adresse": "12 rue de la Paix, Saint-Denis 97400",
+          "couleur": "6",
+          "emailGerant": "marie@salon.re"
+        }
+      }
+    }
+  }
+}

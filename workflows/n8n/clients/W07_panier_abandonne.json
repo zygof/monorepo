@@ -1,0 +1,227 @@
+{
+  "name": "[ECOMMERCE] - W07 Récupération Panier Abandonné",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "panier-abandonne",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-abandon",
+      "name": "Webhook — Panier Abandonné (J+0)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Déclenché par l'app e-commerce quand un panier n'est pas converti après 1h (cron côté app ou Stripe checkout.session.expired). Payload : { panier: { id, items, total }, client: { email, nom }, config: { codePrmo, nomBoutique, urlBoutique } }."
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.body || $input.first().json;\nconst maintenant = new Date();\n\n// J+1 = 24h après\nconst emailJ1 = new Date(maintenant.getTime() + 24 * 60 * 60 * 1000);\n// J+3 = 72h après\nconst emailJ3 = new Date(maintenant.getTime() + 72 * 60 * 60 * 1000);\n\n// Formater les articles du panier\nconst articlesHTML = (data.panier?.items || []).map(item => \n  `<li>${item.nom} × ${item.quantite} — ${item.prix}€</li>`\n).join('');\n\nconst totalFormate = parseFloat(data.panier?.total || 0).toFixed(2);\n\nreturn [{\n  json: {\n    panier: { ...data.panier, articlesHTML, totalFormate },\n    client: data.client,\n    config: {\n      nomBoutique: data.config?.nomBoutique || 'La Boutique',\n      urlBoutique: data.config?.urlBoutique || '#',\n      codePromo: data.config?.codePromo || 'REVIENS10',\n      remisePromo: data.config?.remisePromo || '10%',\n      emailExpedition: data.config?.emailExpedition || 'noreply@marrynov.re'\n    },\n    timestamps: {\n      emailJ1: emailJ1.toISOString(),\n      emailJ3: emailJ3.toISOString()\n    },\n    panierRepriseUrl: `${data.config?.urlBoutique}/panier/reprendre/${data.panier?.id}`\n  }\n}];"
+      },
+      "id": "prepare-abandon",
+      "name": "Préparer Données Panier",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Calcule les timestamps J+1 et J+3, formate les articles du panier et prépare l'URL de reprise."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"relances_planifiees\": 2}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "ack",
+      "name": "ACK 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 160]
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(0, Math.floor((new Date($json.timestamps.emailJ1) - new Date()) / 1000)) }}",
+        "unit": "seconds"
+      },
+      "id": "wait-j1",
+      "name": "Attendre J+1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 300],
+      "notes": "Pause de 24h. N8n gère la persistance — résiste aux redémarrages."
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "orders",
+        "where": {
+          "conditions": [
+            { "column": "cart_id", "condition": "equal", "value": "={{ $json.panier.id }}" },
+            { "column": "status", "condition": "equal", "value": "completed" }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "check-commande-j1",
+      "name": "Vérifier Commande Passée (J+1)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [900, 300],
+      "credentials": {
+        "postgres": { "id": "postgres-client", "name": "PostgreSQL Client" }
+      },
+      "notes": "Avant d'envoyer la relance, vérifier si le client a finalement commandé. Si commande trouvée → ne pas envoyer l'email."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "pas-commande-j1",
+      "name": "Pas encore commandé ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300],
+      "notes": "Si 0 résultats → le panier est toujours abandonné → envoyer la relance J+1."
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Préparer Données Panier').first().json.config.emailExpedition }}",
+        "toEmail": "={{ $('Préparer Données Panier').first().json.client.email }}",
+        "subject": "=Votre panier vous attend 🛒 — {{ $('Préparer Données Panier').first().json.config.nomBoutique }}",
+        "emailType": "html",
+        "message": "=<h2>Vous avez oublié quelque chose ! 🛒</h2>\n\n<p>Bonjour {{ $('Préparer Données Panier').first().json.client.nom }},</p>\n<p>Votre panier chez <strong>{{ $('Préparer Données Panier').first().json.config.nomBoutique }}</strong> vous attend encore !</p>\n\n<h3>Votre panier ({{ $('Préparer Données Panier').first().json.panier.totalFormate }}€)</h3>\n<ul>{{ $('Préparer Données Panier').first().json.panier.articlesHTML }}</ul>\n\n<p>👉 <a href=\"{{ $('Préparer Données Panier').first().json.panierRepriseUrl }}\" style=\"background:#000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px\">Reprendre ma commande</a></p>\n\n<p>À bientôt,<br><strong>{{ $('Préparer Données Panier').first().json.config.nomBoutique }}</strong></p>",
+        "options": {}
+      },
+      "id": "email-j1",
+      "name": "Email — Relance J+1",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1340, 240],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(0, Math.floor((new Date($('Préparer Données Panier').first().json.timestamps.emailJ3) - new Date()) / 1000)) }}",
+        "unit": "seconds"
+      },
+      "id": "wait-j3",
+      "name": "Attendre J+3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1560, 240],
+      "notes": "Attente supplémentaire jusqu'à J+3 pour la relance finale avec code promo."
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "orders",
+        "where": {
+          "conditions": [
+            {
+              "column": "cart_id",
+              "condition": "equal",
+              "value": "={{ $('Préparer Données Panier').first().json.panier.id }}"
+            },
+            { "column": "status", "condition": "equal", "value": "completed" }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "check-commande-j3",
+      "name": "Vérifier Commande Passée (J+3)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1780, 240],
+      "credentials": {
+        "postgres": { "id": "postgres-client", "name": "PostgreSQL Client" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "equals" }
+            }
+          ]
+        }
+      },
+      "id": "pas-commande-j3",
+      "name": "Toujours pas commandé ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2000, 240]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Préparer Données Panier').first().json.config.emailExpedition }}",
+        "toEmail": "={{ $('Préparer Données Panier').first().json.client.email }}",
+        "subject": "=Dernière chance + {{ $('Préparer Données Panier').first().json.config.remisePromo }} de réduction 🎁",
+        "emailType": "html",
+        "message": "=<h2>🎁 Un cadeau pour vous faire revenir !</h2>\n\n<p>Bonjour {{ $('Préparer Données Panier').first().json.client.nom }},</p>\n<p>Votre panier est toujours là, et nous voudrions vous aider à finaliser votre achat.</p>\n\n<div style=\"background:#f5f5f5;border-left:4px solid #000;padding:16px;margin:16px 0\">\n  <p style=\"margin:0;font-size:18px\">Utilisez le code <strong style=\"font-size:24px;letter-spacing:2px\">{{ $('Préparer Données Panier').first().json.config.codePromo }}</strong></p>\n  <p style=\"margin:4px 0 0\">→ <strong>{{ $('Préparer Données Panier').first().json.config.remisePromo }} de réduction</strong> sur votre commande</p>\n</div>\n\n<p>⚠️ Offre valable 48h uniquement.</p>\n\n<p>👉 <a href=\"{{ $('Préparer Données Panier').first().json.panierRepriseUrl }}\" style=\"background:#000;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px\">Commander maintenant</a></p>\n\n<p>À bientôt,<br><strong>{{ $('Préparer Données Panier').first().json.config.nomBoutique }}</strong></p>",
+        "options": {}
+      },
+      "id": "email-j3",
+      "name": "Email — Relance Finale J+3 + Promo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [2220, 200],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Panier Abandonné (J+0)": {
+      "main": [[{ "node": "Préparer Données Panier", "type": "main", "index": 0 }]]
+    },
+    "Préparer Données Panier": {
+      "main": [
+        [
+          { "node": "ACK 200", "type": "main", "index": 0 },
+          { "node": "Attendre J+1", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Attendre J+1": {
+      "main": [[{ "node": "Vérifier Commande Passée (J+1)", "type": "main", "index": 0 }]]
+    },
+    "Vérifier Commande Passée (J+1)": {
+      "main": [[{ "node": "Pas encore commandé ?", "type": "main", "index": 0 }]]
+    },
+    "Pas encore commandé ?": {
+      "main": [[{ "node": "Email — Relance J+1", "type": "main", "index": 0 }], []]
+    },
+    "Email — Relance J+1": {
+      "main": [[{ "node": "Attendre J+3", "type": "main", "index": 0 }]]
+    },
+    "Attendre J+3": {
+      "main": [[{ "node": "Vérifier Commande Passée (J+3)", "type": "main", "index": 0 }]]
+    },
+    "Vérifier Commande Passée (J+3)": {
+      "main": [[{ "node": "Toujours pas commandé ?", "type": "main", "index": 0 }]]
+    },
+    "Toujours pas commandé ?": {
+      "main": [[{ "node": "Email — Relance Finale J+3 + Promo", "type": "main", "index": 0 }], []]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["clients", "ecommerce", "panier-abandonne"]
+}

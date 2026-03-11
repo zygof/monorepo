@@ -1,0 +1,138 @@
+{
+  "name": "[ECOMMERCE/PIZZERIA] - W06 Notification Nouvelle Commande",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "stripe-trigger",
+      "name": "Webhook — Stripe payment_intent.succeeded",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Reçoit les événements Stripe. Configurer dans Stripe Dashboard > Webhooks > Ajouter endpoint. Événement : payment_intent.succeeded. IMPORTANT : vérifier la signature Stripe (Stripe-Signature header) en production via le nœud suivant."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Vérification basique + extraction données Stripe\nconst payload = $input.first().json.body || $input.first().json;\n\n// Ignorer les événements non pertinents\nif (payload.type !== 'payment_intent.succeeded') {\n  throw new Error(`Événement ignoré : ${payload.type}`);\n}\n\nconst pi = payload.data?.object || {};\nconst metadata = pi.metadata || {};\n\n// Extraire les données commande depuis les metadata Stripe\nconst commande = {\n  id: pi.id,\n  reference: metadata.order_id || pi.id.slice(-8).toUpperCase(),\n  montant: (pi.amount / 100).toFixed(2),\n  currency: pi.currency?.toUpperCase() || 'EUR',\n  statut: 'confirmée',\n  dateISO: new Date(pi.created * 1000).toISOString(),\n  dateFr: new Date(pi.created * 1000).toLocaleString('fr-FR', { timeZone: 'Indian/Reunion' }),\n  articles: metadata.articles ? JSON.parse(metadata.articles) : [],\n  livraisonType: metadata.livraison_type || 'livraison',\n  adresseLivraison: metadata.adresse_livraison || 'À récupérer sur place'\n};\n\nconst client = {\n  nom: pi.shipping?.name || metadata.client_nom || 'Client',\n  email: metadata.client_email || pi.receipt_email || '',\n  telephone: pi.shipping?.phone || metadata.client_telephone || ''\n};\n\nconst config = {\n  nomEtablissement: metadata.etablissement || 'La Boutique',\n  emailGerant: metadata.email_gerant || '',\n  emailExpedition: metadata.email_expedition || 'commandes@marrynov.re'\n};\n\nreturn [{ json: { commande, client, config } }];"
+      },
+      "id": "parse-stripe",
+      "name": "Parser Événement Stripe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Extrait les données de la commande depuis le payload Stripe. Les informations client/commande doivent être passées dans les metadata du PaymentIntent lors de sa création côté app."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"received\": true}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "stripe-ack",
+      "name": "ACK Stripe (200)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 160],
+      "notes": "Stripe exige une réponse 200 dans les 30 secondes. On répond immédiatement et on traite ensuite."
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.config.emailExpedition }}",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "=✅ Commande confirmée #{{ $json.commande.reference }} — {{ $json.config.nomEtablissement }}",
+        "emailType": "html",
+        "message": "=<h2>✅ Votre commande est confirmée !</h2>\n\n<p>Bonjour <strong>{{ $json.client.nom }}</strong>,</p>\n<p>Merci pour votre commande ! Voici votre récapitulatif :</p>\n\n<table style=\"border-collapse:collapse;width:100%;margin:16px 0\">\n  <tr style=\"background:#f5f5f5\">\n    <td style=\"padding:10px;border:1px solid #e0e0e0\"><strong>Référence</strong></td>\n    <td style=\"padding:10px;border:1px solid #e0e0e0\">#{{ $json.commande.reference }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:10px;border:1px solid #e0e0e0\"><strong>Montant payé</strong></td>\n    <td style=\"padding:10px;border:1px solid #e0e0e0\"><strong>{{ $json.commande.montant }} {{ $json.commande.currency }}</strong></td>\n  </tr>\n  <tr style=\"background:#f5f5f5\">\n    <td style=\"padding:10px;border:1px solid #e0e0e0\"><strong>Livraison</strong></td>\n    <td style=\"padding:10px;border:1px solid #e0e0e0\">{{ $json.commande.adresseLivraison }}</td>\n  </tr>\n  <tr>\n    <td style=\"padding:10px;border:1px solid #e0e0e0\"><strong>Date</strong></td>\n    <td style=\"padding:10px;border:1px solid #e0e0e0\">{{ $json.commande.dateFr }}</td>\n  </tr>\n</table>\n\n<p>Nous préparons votre commande. Vous serez notifié(e) lors de l'expédition.</p>\n<p>À bientôt,<br><strong>{{ $json.config.nomEtablissement }}</strong></p>",
+        "options": {}
+      },
+      "id": "email-client",
+      "name": "Email — Confirmation Client",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [680, 300],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@marrynov.re",
+        "toEmail": "={{ $json.config.emailGerant }}",
+        "subject": "=🛒 Nouvelle commande #{{ $json.commande.reference }} — {{ $json.commande.montant }}€",
+        "emailType": "html",
+        "message": "=<h2>🛒 Nouvelle commande à préparer</h2>\n\n<p><strong>Référence :</strong> #{{ $json.commande.reference }}<br>\n<strong>Montant :</strong> {{ $json.commande.montant }} {{ $json.commande.currency }}<br>\n<strong>Date :</strong> {{ $json.commande.dateFr }}</p>\n\n<h3>Client</h3>\n<p>{{ $json.client.nom }}<br>{{ $json.client.email }}<br>{{ $json.client.telephone }}</p>\n\n<h3>Livraison</h3>\n<p>{{ $json.commande.adresseLivraison }}</p>\n\n<p>⚡ <strong>À traiter dès que possible.</strong></p>",
+        "options": {}
+      },
+      "id": "email-gerant",
+      "name": "Email — Notification Gérant",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [680, 440],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=UPDATE orders SET status = 'confirmed', updated_at = NOW() WHERE stripe_payment_intent_id = '{{ $json.commande.id }}' RETURNING id, reference, status",
+        "options": {}
+      },
+      "id": "db-update",
+      "name": "BDD — Mise à Jour Statut Commande",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [680, 580],
+      "credentials": {
+        "postgres": { "id": "postgres-client", "name": "PostgreSQL Client" }
+      },
+      "notes": "Met à jour le statut de la commande en BDD. Credential : connexion PostgreSQL de l'app client. Adapter la table selon le schéma Prisma client."
+    }
+  ],
+  "connections": {
+    "Webhook — Stripe payment_intent.succeeded": {
+      "main": [[{ "node": "Parser Événement Stripe", "type": "main", "index": 0 }]]
+    },
+    "Parser Événement Stripe": {
+      "main": [
+        [
+          { "node": "ACK Stripe (200)", "type": "main", "index": 0 },
+          { "node": "Email — Confirmation Client", "type": "main", "index": 0 },
+          { "node": "Email — Notification Gérant", "type": "main", "index": 0 },
+          { "node": "BDD — Mise à Jour Statut Commande", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["clients", "ecommerce", "pizzeria", "stripe"],
+  "testData": {
+    "stripePayload": {
+      "type": "payment_intent.succeeded",
+      "data": {
+        "object": {
+          "id": "pi_test_123456",
+          "amount": 2490,
+          "currency": "eur",
+          "created": 1741526400,
+          "metadata": {
+            "order_id": "CMD-001",
+            "client_nom": "Jean Dupont",
+            "client_email": "jean@example.re",
+            "client_telephone": "+262692000000",
+            "etablissement": "Pizza Chez Paolo",
+            "email_gerant": "paolo@pizza.re",
+            "livraison_type": "livraison",
+            "adresse_livraison": "5 rue de la République, Saint-Denis"
+          }
+        }
+      }
+    }
+  }
+}

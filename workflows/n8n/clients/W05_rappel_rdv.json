@@ -1,0 +1,153 @@
+{
+  "name": "[COIFFURE/RESTAURANT] - W05 Rappel RDV",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rappel-rdv",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-rdv",
+      "name": "Webhook — Nouvelle Réservation",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "notes": "Reçoit une réservation depuis l'app client. Payload attendu : { rdv: { id, date, heure, service }, client: { nom, email, telephone }, config: { delaiEmail: 24, delaiSMS: 2, nomEtablissement, nomGerant, telephone } }. Ce workflow est déclenché à la création du RDV, et planifie les rappels."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculer les timestamps des rappels\nconst data = $input.first().json.body || $input.first().json;\n\nconst dateRdv = new Date(`${data.rdv.date}T${data.rdv.heure}:00`);\nconst maintenant = new Date();\n\n// Délais configurables (par défaut : email J-1, SMS H-2)\nconst delaiEmail = data.config?.delaiEmail || 24; // heures avant\nconst delaiSMS = data.config?.delaiSMS || 2;     // heures avant\n\nconst rappelEmail = new Date(dateRdv.getTime() - delaiEmail * 60 * 60 * 1000);\nconst rappelSMS = new Date(dateRdv.getTime() - delaiSMS * 60 * 60 * 1000);\n\nconst dateRdvFr = dateRdv.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });\nconst heureRdvFr = dateRdv.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });\n\nreturn [{\n  json: {\n    rdv: {\n      ...data.rdv,\n      dateFormatee: dateRdvFr,\n      heureFormatee: heureRdvFr,\n      dateISO: dateRdv.toISOString()\n    },\n    client: data.client,\n    config: {\n      nomEtablissement: data.config?.nomEtablissement || 'Notre établissement',\n      nomGerant: data.config?.nomGerant || 'L\\'équipe',\n      telephone: data.config?.telephone || '',\n      adresse: data.config?.adresse || ''\n    },\n    rappelEmail: rappelEmail.toISOString(),\n    rappelSMS: rappelSMS.toISOString(),\n    rappelEmailStr: rappelEmail.toLocaleString('fr-FR'),\n    rappelSMSStr: rappelSMS.toLocaleString('fr-FR'),\n    delaiEmailH: delaiEmail,\n    delaiSMSH: delaiSMS\n  }\n}];"
+      },
+      "id": "calc-rappels",
+      "name": "Calculer Timestamps Rappels",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "notes": "Calcule les timestamps exacts pour les rappels email et SMS en fonction des délais configurés. Les délais sont paramétrables par client."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"rdvId\": \"{{ $json.rdv.id }}\", \"rappels\": { \"email\": \"{{ $json.rappelEmailStr }}\", \"sms\": \"{{ $json.rappelSMSStr }}\" } }",
+        "options": { "responseCode": 200 }
+      },
+      "id": "webhook-response",
+      "name": "Réponse Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 180],
+      "notes": "Réponse immédiate à l'app. Les rappels seront envoyés au moment calculé via le workflow W05b_send_rappel_rdv (appelé par cron ou wait node)."
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(0, Math.floor((new Date($json.rappelEmail) - new Date()) / 1000)) }}",
+        "unit": "seconds"
+      },
+      "id": "wait-email",
+      "name": "Attendre jusqu'au rappel Email",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 300],
+      "notes": "Met le workflow en pause jusqu'au moment du rappel email (J-1 par défaut). N8n gère le délai de manière persistante (résiste aux redémarrages)."
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.config.email || 'noreply@marrynov.re' }}",
+        "toEmail": "={{ $json.client.email }}",
+        "subject": "=Rappel de votre RDV — {{ $json.config.nomEtablissement }}",
+        "emailType": "html",
+        "message": "=<h2>Rappel de votre rendez-vous 📅</h2>\n\n<p>Bonjour <strong>{{ $json.client.nom }}</strong>,</p>\n\n<p>Nous vous rappelons votre rendez-vous chez <strong>{{ $json.config.nomEtablissement }}</strong> :</p>\n\n<table style=\"border-collapse:collapse;margin:16px 0\">\n  <tr><td style=\"padding:8px;font-weight:bold\">📅 Date :</td><td style=\"padding:8px\">{{ $json.rdv.dateFormatee }}</td></tr>\n  <tr style=\"background:#f9f9f9\"><td style=\"padding:8px;font-weight:bold\">⏰ Heure :</td><td style=\"padding:8px\">{{ $json.rdv.heureFormatee }}</td></tr>\n  <tr><td style=\"padding:8px;font-weight:bold\">✂️ Service :</td><td style=\"padding:8px\">{{ $json.rdv.service }}</td></tr>\n  {{ $json.config.adresse ? '<tr style=\"background:#f9f9f9\"><td style=\"padding:8px;font-weight:bold\">📍 Adresse :</td><td style=\"padding:8px\">' + $json.config.adresse + '</td></tr>' : '' }}\n</table>\n\n<p>En cas d'empêchement, merci de nous prévenir dès que possible au <strong>{{ $json.config.telephone }}</strong>.</p>\n\n<p>À bientôt,<br><strong>{{ $json.config.nomGerant }} — {{ $json.config.nomEtablissement }}</strong></p>",
+        "options": {}
+      },
+      "id": "email-rappel",
+      "name": "Email — Rappel J-1",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [900, 240],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.max(0, Math.floor((new Date($json.rappelSMS) - new Date()) / 1000)) }}",
+        "unit": "seconds"
+      },
+      "id": "wait-sms",
+      "name": "Attendre jusqu'au rappel SMS",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [900, 380],
+      "notes": "Deuxième attente : jusqu'au rappel SMS H-2."
+    },
+    {
+      "parameters": {
+        "from": "={{ $env.TWILIO_PHONE_NUMBER }}",
+        "to": "={{ $json.client.telephone }}",
+        "message": "=Rappel RDV {{ $json.config.nomEtablissement }} — {{ $json.rdv.dateFormatee }} à {{ $json.rdv.heureFormatee }}. Annulation : {{ $json.config.telephone }}"
+      },
+      "id": "sms-rappel",
+      "name": "SMS — Rappel H-2",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1120, 380],
+      "credentials": {
+        "twilioApi": { "id": "twilio-api", "name": "Twilio MARRYNOV" }
+      },
+      "notes": "SMS de rappel 2h avant le RDV via Twilio. Le message est court (SMS = 160 chars max). Credential : Account SID + Auth Token Twilio."
+    }
+  ],
+  "connections": {
+    "Webhook — Nouvelle Réservation": {
+      "main": [[{ "node": "Calculer Timestamps Rappels", "type": "main", "index": 0 }]]
+    },
+    "Calculer Timestamps Rappels": {
+      "main": [
+        [
+          { "node": "Réponse Webhook", "type": "main", "index": 0 },
+          { "node": "Attendre jusqu'au rappel Email", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Attendre jusqu'au rappel Email": {
+      "main": [[{ "node": "Email — Rappel J-1", "type": "main", "index": 0 }]]
+    },
+    "Email — Rappel J-1": {
+      "main": [[{ "node": "Attendre jusqu'au rappel SMS", "type": "main", "index": 0 }]]
+    },
+    "Attendre jusqu'au rappel SMS": {
+      "main": [[{ "node": "SMS — Rappel H-2", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["clients", "coiffure", "restaurant", "rdv"],
+  "testData": {
+    "webhook": {
+      "body": {
+        "rdv": {
+          "id": "rdv-001",
+          "date": "2026-03-15",
+          "heure": "14:30",
+          "service": "Coupe + Coloration"
+        },
+        "client": {
+          "nom": "Sophie Martin",
+          "email": "sophie@example.re",
+          "telephone": "+262692123456"
+        },
+        "config": {
+          "nomEtablissement": "Salon Marie Beauté",
+          "nomGerant": "Marie",
+          "telephone": "0262 12 34 56",
+          "adresse": "12 rue de la Paix, Saint-Denis",
+          "delaiEmail": 24,
+          "delaiSMS": 2
+        }
+      }
+    }
+  }
+}

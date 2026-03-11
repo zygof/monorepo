@@ -1,0 +1,128 @@
+{
+  "name": "[ECOMMERCE] - W09 Alerte Stock Faible",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-hourly",
+      "name": "Cron — Toutes les heures",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "notes": "Vérification du stock toutes les heures. Adapter la fréquence selon les besoins : toutes les 30min pour les boutiques très actives, toutes les 4h pour les boutiques calmes."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.id, p.nom, p.slug, p.stock_actuel, p.seuil_alerte, p.email_gerant, c.nom as categorie FROM produits p LEFT JOIN categories c ON p.categorie_id = c.id WHERE p.stock_actuel <= p.seuil_alerte AND p.actif = true ORDER BY p.stock_actuel ASC",
+        "options": {}
+      },
+      "id": "query-stock",
+      "name": "BDD — Produits Stock Faible",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": { "id": "postgres-client", "name": "PostgreSQL Client" }
+      },
+      "notes": "Requête les produits sous le seuil d'alerte. Le schema suppose : table produits avec colonnes stock_actuel, seuil_alerte (configurable par produit), email_gerant, actif. Adapter selon le schéma Prisma client."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        }
+      },
+      "id": "check-alertes",
+      "name": "Des alertes à envoyer ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Si aucun produit en alerte, arrêt du workflow sans notification."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Grouper les produits par email gérant pour un seul email par boutique\nconst produits = $input.all().map(i => i.json);\n\nconst grouped = {};\nproduits.forEach(p => {\n  const email = p.email_gerant || 'gerant@boutique.re';\n  if (!grouped[email]) grouped[email] = [];\n  grouped[email].push(p);\n});\n\nreturn Object.entries(grouped).map(([email, produits]) => ({\n  json: {\n    email,\n    produits,\n    nbProduits: produits.length,\n    produitsEnRupture: produits.filter(p => p.stock_actuel === 0).length,\n    tableau: produits.map(p => \n      `<tr style=\"${p.stock_actuel === 0 ? 'background:#fff5f5' : ''}\">\n        <td style=\"padding:8px;border:1px solid #e0e0e0\">${p.nom}</td>\n        <td style=\"padding:8px;border:1px solid #e0e0e0\">${p.categorie || '-'}</td>\n        <td style=\"padding:8px;border:1px solid #e0e0e0;${p.stock_actuel === 0 ? 'color:red;font-weight:bold' : 'color:orange'}\">${p.stock_actuel === 0 ? '⛔ RUPTURE' : '⚠️ ' + p.stock_actuel}</td>\n        <td style=\"padding:8px;border:1px solid #e0e0e0;color:#888\">${p.seuil_alerte}</td>\n      </tr>`\n    ).join('')\n  }\n}));"
+      },
+      "id": "group-by-gerant",
+      "name": "Grouper par Gérant",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 240],
+      "notes": "Regroupe les alertes par gérant pour envoyer un seul email résumé plutôt qu'un email par produit."
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@marrynov.re",
+        "toEmail": "={{ $json.email }}",
+        "subject": "=⚠️ Stock faible — {{ $json.nbProduits }} produit(s) à réapprovisionner",
+        "emailType": "html",
+        "message": "=<h2>⚠️ Alerte stock — Action requise</h2>\n\n{{ $json.produitsEnRupture > 0 ? '<div style=\"background:#fff5f5;border-left:4px solid red;padding:12px;margin-bottom:16px\"><strong>🚨 ' + $json.produitsEnRupture + ' produit(s) en rupture totale !</strong></div>' : '' }}\n\n<p><strong>{{ $json.nbProduits }} produit(s)</strong> nécessitent votre attention :</p>\n\n<table style=\"border-collapse:collapse;width:100%\">\n  <thead>\n    <tr style=\"background:#f5f5f5\">\n      <th style=\"padding:8px;border:1px solid #e0e0e0;text-align:left\">Produit</th>\n      <th style=\"padding:8px;border:1px solid #e0e0e0;text-align:left\">Catégorie</th>\n      <th style=\"padding:8px;border:1px solid #e0e0e0;text-align:left\">Stock actuel</th>\n      <th style=\"padding:8px;border:1px solid #e0e0e0;text-align:left\">Seuil alerte</th>\n    </tr>\n  </thead>\n  <tbody>\n    {{ $json.tableau }}\n  </tbody>\n</table>\n\n<p style=\"margin-top:16px\">Pensez à réapprovisionner ces produits pour éviter les ruptures.</p>\n\n<hr>\n<p style=\"font-size:11px;color:#aaa\">Alerte générée automatiquement par le système MARRYNOV — {{ $now.format('dd/MM/yyyy HH:mm') }}</p>",
+        "options": {}
+      },
+      "id": "email-alerte",
+      "name": "Email — Alerte Stock",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1120, 240],
+      "credentials": {
+        "smtp": { "id": "resend-smtp", "name": "Resend SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — Toutes les heures": {
+      "main": [[{ "node": "BDD — Produits Stock Faible", "type": "main", "index": 0 }]]
+    },
+    "BDD — Produits Stock Faible": {
+      "main": [[{ "node": "Des alertes à envoyer ?", "type": "main", "index": 0 }]]
+    },
+    "Des alertes à envoyer ?": {
+      "main": [[{ "node": "Grouper par Gérant", "type": "main", "index": 0 }], []]
+    },
+    "Grouper par Gérant": {
+      "main": [[{ "node": "Email — Alerte Stock", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "timezone": "Indian/Reunion",
+    "saveManualExecutions": true
+  },
+  "tags": ["clients", "ecommerce", "stock"],
+  "testData": {
+    "produits": [
+      {
+        "id": "p1",
+        "nom": "Pizza Margherita (surgelée)",
+        "slug": "pizza-margherita",
+        "stock_actuel": 0,
+        "seuil_alerte": 5,
+        "email_gerant": "paolo@pizza.re",
+        "categorie": "Pizzas"
+      },
+      {
+        "id": "p2",
+        "nom": "Coca Cola 33cl",
+        "slug": "coca-cola-33",
+        "stock_actuel": 3,
+        "seuil_alerte": 10,
+        "email_gerant": "paolo@pizza.re",
+        "categorie": "Boissons"
+      }
+    ]
+  }
+}
