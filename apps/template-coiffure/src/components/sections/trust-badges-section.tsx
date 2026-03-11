@@ -18,7 +18,7 @@ export function TrustBadgesSection(): JSX.Element {
       aria-label="Nos engagements"
     >
       <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_4px_20px_0_rgba(0,0,0,0.05)]">
-        <div className="flex flex-col divide-y divide-border/50 sm:flex-row sm:divide-x sm:divide-y-0 px-6 py-8">
+        <div className="flex flex-col divide-y divide-border/50 sm:flex-row sm:divide-x sm:divide-y-0 px-6 sm:py-8">
           {/* Note Google */}
           <StatItem
             icon={

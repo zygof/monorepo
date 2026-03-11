@@ -101,12 +101,12 @@ export function HeroSection(): JSX.Element {
             </p>
 
             {/* CTAs */}
-            <div className="mb-6 flex flex-wrap items-center gap-4">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <Button
                 asChild
                 variant="default"
                 size="pill"
-                className="shadow-primary-glow hover:bg-primary-dark"
+                className="w-full shadow-primary-glow hover:bg-primary-dark sm:w-auto"
               >
                 <Link href={bookingUrl}>
                   {hero.ctaPrimary}
@@ -114,12 +114,7 @@ export function HeroSection(): JSX.Element {
                 </Link>
               </Button>
 
-              <Button
-                asChild
-                variant="outline"
-                size="pill"
-                className="border-2 border-border-subtle bg-white text-text hover:border-primary hover:text-primary hover:bg-transparent"
-              >
+              <Button asChild variant="outline" size="pill" className="w-full sm:w-auto">
                 <Link href={servicesUrl}>{hero.ctaSecondary}</Link>
               </Button>
             </div>

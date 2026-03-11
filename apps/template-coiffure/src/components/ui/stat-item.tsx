@@ -5,7 +5,7 @@ interface StatItemProps {
   icon: ReactNode;
   value: string;
   label: string;
-  /** Affiche une bordure gauche (séparateur vertical) */
+  /** @deprecated Le parent gère les séparateurs via divide-y/divide-x */
   withDivider?: boolean;
   className?: string;
 }
@@ -18,17 +18,11 @@ export function StatItem({
   icon,
   value,
   label,
-  withDivider = false,
+  withDivider: _withDivider,
   className,
 }: StatItemProps): JSX.Element {
   return (
-    <div
-      className={cn(
-        'flex flex-1 flex-col items-center px-4',
-        withDivider && 'border-l border-border/50',
-        className,
-      )}
-    >
+    <div className={cn('flex flex-1 flex-col items-center px-4 py-4 sm:py-0', className)}>
       <div className="mb-2 flex h-10 w-10 items-center justify-center">
         <span className="text-primary">{icon}</span>
       </div>

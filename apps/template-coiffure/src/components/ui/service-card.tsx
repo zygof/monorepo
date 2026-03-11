@@ -28,7 +28,7 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
     <article
       aria-labelledby={headingId}
       className={cn(
-        'relative flex flex-col overflow-hidden rounded-2xl bg-surface',
+        'relative flex flex-col rounded-2xl bg-surface',
         'shadow-card transition-shadow duration-300 hover:shadow-card-hover',
         featured ? 'border-2 border-secondary' : 'border border-transparent',
         className,
@@ -47,7 +47,7 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
       )}
 
       {/* Image */}
-      <div className="relative h-64 w-full overflow-hidden">
+      <div className="relative h-64 w-full overflow-hidden rounded-t-2xl">
         <Image
           src={imageUrl}
           alt={imageAlt}
