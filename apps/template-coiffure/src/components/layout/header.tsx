@@ -1,14 +1,14 @@
 import type { JSX } from 'react';
 import Link from 'next/link';
-import { Scissors, Phone, User, Menu } from 'lucide-react';
+import { Scissors, Phone, User } from 'lucide-react';
 import { Button } from '@marrynov/ui';
 import { salonConfig } from '@/config/salon.config';
+import { MobileMenu } from './mobile-menu';
 
 /**
  * Header sticky avec backdrop blur.
- * Server Component — pas d'état client.
+ * Server Component — l'interactivité mobile est déléguée à MobileMenu (Client).
  *
- * TODO (mobile) : extraire la nav en client component pour le menu hamburger.
  * TODO (auth) : remplacer l'icône User par le menu compte connecté.
  */
 export function Header(): JSX.Element {
@@ -47,7 +47,7 @@ export function Header(): JSX.Element {
           {/* Téléphone */}
           <a
             href={`tel:${contact.phoneRaw}`}
-            className="hidden lg:flex items-center gap-2 text-base font-medium text-text hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="hidden lg:flex items-center gap-2 text-base font-medium text-primary hover:text-primary-rose transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             aria-label={`Appeler le ${contact.phone}`}
           >
             <Phone size={14} aria-hidden="true" />
@@ -58,13 +58,13 @@ export function Header(): JSX.Element {
           <Button
             variant="outline"
             size="icon"
-            className="hidden lg:flex rounded-full border-border hover:border-primary"
+            className="hidden lg:flex rounded-full border-border bg-primary-light hover:border-primary"
             aria-label="Mon compte"
           >
             <User size={16} aria-hidden="true" />
           </Button>
 
-          {/* CTA Réserver */}
+          {/* CTA Réserver desktop */}
           <Button
             asChild
             variant="secondary"
@@ -74,17 +74,13 @@ export function Header(): JSX.Element {
             <Link href={bookingUrl}>Prendre RDV</Link>
           </Button>
 
-          {/* Hamburger mobile — TODO: implémenter le menu mobile */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden rounded-md"
-            aria-label="Ouvrir le menu"
-            aria-expanded="false"
-            aria-controls="mobile-menu"
-          >
-            <Menu size={22} className="text-text" aria-hidden="true" />
-          </Button>
+          {/* Menu mobile */}
+          <MobileMenu
+            navLinks={navLinks}
+            bookingUrl={bookingUrl}
+            phone={contact.phone}
+            phoneRaw={contact.phoneRaw}
+          />
         </div>
       </div>
     </header>
