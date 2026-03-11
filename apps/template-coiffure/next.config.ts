@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
     formats: ['image/avif', 'image/webp'],
+    // Qualités déclarées explicitement — requis à partir de Next.js 16
+    qualities: [75, 80, 90],
     remotePatterns: [
       // Figma assets (dev uniquement, expirent après 7 jours)
       {

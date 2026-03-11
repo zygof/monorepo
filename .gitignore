@@ -35,3 +35,6 @@ pnpm-debug.log*
 # Prisma
 *.db
 *.db-journal
+
+# Métadonnées Windows ADS (WSL2 — Zone.Identifier)
+*:Zone.Identifier
