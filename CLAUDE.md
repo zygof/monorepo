@@ -3,144 +3,206 @@
 ## Identité
 
 - Entreprise : MARRYNOV (micro-entreprise freelance, La Réunion)
-- Propriétaire : Nicolas, développeur fullstack 12 ans d'expérience
+- Propriétaire : Nicolas MARRY, développeur fullstack 8 ans d'expérience salariée
 - Slogan : "Ici pour vous développer."
+- Lancement officiel : 1er août 2026
 - Domaines : marrynov.re / marrynov.fr
 
 ## Stack technique
 
 - Framework : Next.js 15 App Router, TypeScript strict
-- ORM : Prisma + PostgreSQL
+- ORM : Prisma + PostgreSQL 16
 - UI : Tailwind CSS + Shadcn/ui + design tokens CSS
 - Auth : next-auth v5
 - Paiement : Stripe
 - Emails : Resend
 - Uploads : Uploadthing
+- Validation : Zod
 - Tests : Vitest + Testing Library
-- Déploiement : Dokploy (self-hosted sur Contabo VPS)
-- Automatisation : n8n (self-hosted)
+- Monorepo : Turborepo + pnpm workspaces
+- Déploiement : Dokploy v0.28.6 (self-hosted sur Contabo VPS)
+- Automatisation : n8n (self-hosted, SQLite)
 - Ticketing : Linear
 - Monitoring : Uptime Kuma + Sentry
 - Analytics : GA4 + GTM
 
-## Infrastructure (décisions techniques validées)
+## Infrastructure (production — opérationnelle)
 
-- **DNS** : Cloudflare (API Token pour Traefik ACME / Let's Encrypt wildcard)
-- **Registry Docker** : ghcr.io (GitHub Container Registry — gratuit, intégré GitHub Actions)
-- **Backup distant** : Backblaze B2 (S3-compatible, natif Dokploy, le moins cher)
-- **Sécurité VPS** : UFW + Fail2ban + SSH par clé ED25519 uniquement (no password)
-- **Orchestration** : Docker Swarm (via Dokploy) + Docker Compose pour stacks tierces
-- **Reverse proxy** : Traefik v3 (intégré Dokploy, SSL auto via Cloudflare DNS challenge)
-- **Hébergeur** : Contabo VPS S — 4vCPU / 8Go RAM / 200Go NVMe — lancement prévu juillet/août
+- **Hébergeur** : Contabo Cloud VPS 6C — 6vCPU / 12Go RAM / 200Go SSD
+- **IP** : 37.60.227.66
+- **OS** : Ubuntu 24.04 LTS
+- **DNS** : Cloudflare (marrynov.re + marrynov.fr)
+- **Reverse proxy** : Traefik v3 (SSL auto via Cloudflare DNS challenge)
+- **Orchestration** : Docker Compose via Dokploy
+- **Registry Docker** : ghcr.io (GitHub Container Registry)
+- **Backup** : Backblaze B2 EU — eu-central-003
+- **Sécurité** : UFW + Fail2ban + SSH par clé ED25519 uniquement
 
-## URLs de production (à configurer en juillet)
+## URLs de production (actives)
 
-- `dokploy.marrynov.re` → Dashboard Dokploy
-- `n8n.marrynov.re` → Automatisation n8n
-- `uptime.marrynov.re` → Uptime Kuma
-- `[secteur].marrynov.re`→ Démos clients
+- `dokploy.marrynov.re` → Dashboard Dokploy v0.28.6
+- `n8n.marrynov.re` → Automatisation n8n (SQLite)
+- `uptime.marrynov.re` → Monitoring Uptime Kuma 2.2.1
+- `marrynov.re` → Site vitrine (déploiement à venir)
+- `[template].marrynov.re` → Démos commerciales (à déployer)
 
-## Environnement local (WSL2 — simulation prod)
+## Services Dokploy (projet : infrastructure)
 
-- Docker Engine 29.3.0 natif (systemd, pas Docker Desktop)
-- Dokploy v0.28.4 local sur http://localhost:3000
-- n8n local sur http://n8n.localhost
-- Uptime Kuma sur http://uptime.localhost
-- Registry local sur localhost:5001
-- Scripts infra : ~/MARRYNOV/infra/
-- Healthcheck : ~/MARRYNOV/infra/backup/scripts/healthcheck.sh
-- Backup : ~/MARRYNOV/infra/backup/scripts/backup.sh (cron 2h00 quotidien)
+- `postgres-shared` → PostgreSQL 16-alpine (user: marrynov, db: marrynov)
+- `redis-shared` → Redis 7-alpine
+- `n8n` → n8n latest (port 5678, SQLite)
+- `uptime-kuma` → Uptime Kuma 2.2.1 (port 3001)
 
 ## Structure monorepo (Turborepo)
 
 ```
 monorepo/
 ├── apps/
-│   ├── template-pizza/
-│   ├── template-coiffure/
-│   ├── template-restaurant/
-│   ├── template-location-voiture/
-│   ├── template-boutique/
-│   └── site-marrynov/
+│   ├── marrynov/                    → Site vitrine marrynov.re
+│   ├── template-coiffure/           → Démo commerciale coiffure (MARRYHAIR)
+│   ├── template-pizza/              → Démo commerciale pizza (MARRYPIZZA)
+│   ├── template-restaurant/         → Démo commerciale restaurant (MARRYFOOD)
+│   ├── template-location-voiture/   → Démo commerciale voiture (MARRYCAR)
+│   └── [nouveau-projet]/            → Projets indépendants (influx, linestie, etc.)
 ├── packages/
-│   ├── ui/            — composants Shadcn/ui partagés
-│   ├── config-eslint/
-│   ├── config-typescript/
-│   ├── design-tokens/ — variables CSS globales
-│   ├── database/      — Prisma schema + client partagé
-│   └── monitoring/    — Sentry + Uptime Kuma helpers
+│   ├── ui/                          → Composants Shadcn/ui partagés
+│   ├── config-eslint/               → Config ESLint partagée
+│   ├── config-typescript/           → tsconfig strict partagé
+│   ├── design-tokens/               → Variables CSS par brand
+│   ├── database/                    → Prisma schema + client partagé
+│   └── monitoring/                  → Sentry + GTM helpers
 ├── tools/
-│   └── create-client/ — script init nouveau client
-├── .claude/
-│   ├── commands/      — slash commands
-│   ├── skills/        — skills MARRYNOV
-│   └── agents/        — subagents spécialisés
-└── workflows/n8n/
+│   └── create-client/               → Script init nouveau client
+├── docs/
+│   └── uxpilot-prompts/             → Prompts UX Pilot par template
+├── workflows/
+│   └── n8n/                         → Workflows n8n (internal + clients)
+└── .claude/
+    ├── commands/                    → Slash commands Claude Code
+    ├── skills/                      → Skills MARRYNOV
+    ├── agents/                      → Subagents spécialisés
+    └── hooks/                       → Hooks pre-commit
 ```
 
-## Conventions de code
+## Types de projets — règle claire
 
-- Langue des commits : français, Conventional Commits
-  - feat(scope): description
-  - fix(scope): description
-  - chore(scope): description
-  - docs(scope): description
-- Pas de mention IA/Claude dans les commits
-- TypeScript strict: no any, pas d'assertions de type inutiles
-- Composants : PascalCase, fichiers kebab-case
-- Hooks custom : prefix use-, dans hooks/
-- Fonctions utilitaires : camelCase, dans lib/
-- Variables CSS : --color-primary, --font-heading, etc.
-- Toujours co-localiser les tests avec le fichier testé
+```
+DANS LE MONOREPO (zygof/monorepo)
+├── apps/marrynov/          → site vitrine
+├── apps/template-*/        → démos commerciales pour prospecter
+└── apps/[nom-projet]/      → tes projets personnels (influx, linestie, etc.)
 
-## Clients
+REPOS SÉPARÉS (marrynov/client-xxx)
+└── Un repo GitHub dédié par client → isolé, archivable
+```
 
-- Format slug : [prenom]-[secteur] (ex: marie-coiffure, dupont-pizza)
-- Repo client : github.com/marrynov/client-[slug]
-- Sous-domaine démo : [secteur].marrynov.re
-- Config client : config/client.config.ts (SEUL fichier à modifier par client)
+- **C'est TON projet** → dans le monorepo
+- **C'est le projet d'un CLIENT** → repo séparé `marrynov/client-[slug]`
 
-## Chemins exacts (WSL2)
+## Règle base de données — 1 projet = 1 DB
 
-- Code clients : ~/MARRYNOV/clients/client-[slug]/
-  (= /home/zygof/MARRYNOV/clients/client-[slug]/ — dans le WSL, pas sur D:)
-- Documents : /mnt/d/zygof/Documents/MARRYNOV/01_CLIENTS/[NOM-SECTEUR]/
-  (= D:\zygof\Documents\MARRYNOV\01_CLIENTS\[NOM-SECTEUR]\ sur Windows)
-- Monorepo : /mnt/d/dev/MARRYNOV/monorepo/
-  (= D:\dev\MARRYNOV\monorepo\ sur Windows)
-- Ne JAMAIS créer de dossiers dans /home/zygof/ — c'est le home WSL2, pas Windows
+```
+postgres-shared (conteneur)
+├── marrynov              → site vitrine
+├── client_marie_coiffure → client Marie (isolée)
+├── client_dupont_pizza   → client Dupont (isolée)
+└── influx                → projet influx (isolée)
+```
 
-## Règles absolues
+Créer une DB pour un nouveau projet :
 
-- Ne jamais commiter de .env
-- Ne jamais hardcoder de clés API
-- Toujours créer un .env.example à jour
-- Chaque nouvelle app doit avoir un Dockerfile multi-stage
-- Chaque PR doit passer lint + typecheck + tests avant merge
-- Les migrations Prisma sont toujours reviewées manuellement avant d'être appliquées
+```bash
+docker exec -it [postgres-ID] psql -U marrynov -d marrynov -c "
+  CREATE DATABASE [db_name];
+  CREATE USER [user] WITH PASSWORD '[pwd]';
+  GRANT ALL PRIVILEGES ON DATABASE [db_name] TO [user];
+"
+```
 
-## MCP disponibles
+## Clients — process complet
 
-- linear : gestion tickets/projets (https://mcp.linear.app/mcp)
-- figma : lecture/push designs (https://mcp.figma.com/mcp)
-- github : repos, PRs, issues
-- notion : CRM, TMA, facturation
+- Format slug : `[prenom]-[secteur]` (ex: marie-coiffure, dupont-pizza)
+- Repo client : `github.com/marrynov/client-[slug]`
+- Staging : `[prenom].marrynov.re`
+- Prod : `[domaine-client.re]`
+- Config client : `config/client.config.ts` (SEUL fichier à modifier)
+- DB : `client_[prenom]_[secteur]` (isolée dans postgres-shared)
 
-## Workflow Figma → Code (design custom client)
+## Design tokens — workflow Figma → Code
 
 Skill activée : `figma-to-code`
 
 1. Nicolas crée le Figma client avec variables nommées selon convention MARRYNOV
-2. `get_variable_defs` → extraire tokens → `packages/design-tokens/tokens.css` + `client.config.ts`
+2. `get_variable_defs` → extraire tokens → `packages/design-tokens/` + `client.config.ts`
 3. `get_design_context` → **toujours le premier appel** avant d'implémenter une section
 4. Code Connect mappe composants Figma → `packages/ui/` (fichiers `.figma.tsx`)
-5. Zéro couleur hex hardcodée — toujours via CSS variables (`--color-primary`, etc.)
+5. Zéro couleur hex hardcodée — toujours via CSS variables
 
-Convention nommage variables Figma = CSS variables = Tailwind config (primary, secondary, muted, etc.)
-Code Connect : installer `@figma/code-connect` dans packages/ui quand les composants seront construits.
+Convention : nommage Figma = CSS variables = Tailwind config (primary, secondary, muted…)
+
+## CI/CD — GitHub Actions
+
+```
+push main     → build Docker → push ghcr.io → Dokploy webhook → prod
+push develop  → build Docker → push ghcr.io → Dokploy webhook → staging
+feature/*     → CI lint + typecheck + tests uniquement
+```
+
+- GitHub App : **MARRYNOV-Dokploy** (connectée à Dokploy)
+- Registry : `ghcr.io/zygof/[app-name]:[branch]`
+- Chaque app a son propre `Dockerfile` multi-stage
+
+## Stratégie de branches
+
+```
+main        → Production stable. Deploy automatique.
+develop     → Intégration. Toutes les features mergent ici.
+feat/xxx    → Développement fonctionnalité
+fix/xxx     → Correction bug
+hotfix/xxx  → Correctif urgent (depuis main)
+```
+
+## Conventions de code
+
+- Langue des commits : **français**, Conventional Commits
+- Scopes : nom du package ou de l'app (ex: `feat(template-coiffure): ...`)
+- Pas de mention IA/Claude dans les commits
+- TypeScript strict : no any, pas d'assertions inutiles
+- Composants : PascalCase, fichiers kebab-case
+- Hooks custom : préfixe `use-`, dans `hooks/`
+- Fonctions utilitaires : camelCase, dans `lib/`
+- Variables CSS : `--color-primary`, `--font-heading`, etc.
+- Tests co-localisés avec le fichier testé
+- Chaque nouvelle app : Dockerfile multi-stage obligatoire
+- Jamais de `.env` commité — `.env.example` toujours à jour
+- Migrations Prisma : review manuelle avant application
+
+## MCP disponibles
+
+- `linear` → gestion tickets/projets (`https://mcp.linear.app/mcp`)
+- `figma` → lecture/push designs (`https://mcp.figma.com/mcp`)
+- `github` → repos, PRs, issues
+- `notion` → CRM, TMA, facturation
+
+## Environnement local (WSL2)
+
+- Docker Engine 29.3.0 natif (systemd, pas Docker Desktop)
+- Monorepo : `/mnt/d/dev/MARRYNOV/monorepo/`
+- Clients : `~/MARRYNOV/clients/client-[slug]/`
+- Documents : `/mnt/d/zygof/Documents/MARRYNOV/01_CLIENTS/[NOM-SECTEUR]/`
+- **Ne JAMAIS créer de dossiers dans `/home/zygof/`** — c'est le home WSL2
+
+## Règles absolues
+
+- Jamais commiter de `.env`
+- Jamais hardcoder de clés API
+- Toujours créer un `.env.example` à jour
+- Chaque app doit avoir un `Dockerfile` multi-stage
+- Chaque PR doit passer lint + typecheck + tests avant merge
+- Migrations Prisma toujours reviewées manuellement
 
 ## Contacts utiles
 
-- Coworking : Le Caré, Sainte-Clotilde (QPV/ZFU)
-- Comptabilité : Freebe
-- Hébergement clients : Contabo VPS S (4vCPU / 8Go / 200Go NVMe)
+- Coworking : Le Caré, Sainte-Clotilde (QPV/ZFU) — contact : Gaultier
+- Facturation : Freebe
+- Client initial : ITAF (La Réunion)
