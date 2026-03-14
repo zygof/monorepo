@@ -50,6 +50,8 @@ interface BookingConfirmationData {
   salonName?: string;
   salonPhone?: string;
   salonAddress?: string;
+  /** Montant de l'acompte payé en centimes (Premium uniquement) */
+  depositAmount?: number;
 }
 
 export async function sendBookingConfirmation(data: BookingConfirmationData) {
@@ -78,6 +80,16 @@ export async function sendBookingConfirmation(data: BookingConfirmationData) {
           <p style="margin: 8px 0 4px 0;"><strong>Prestations :</strong></p>
           <ul style="margin: 0; padding-left: 20px;">${servicesList}</ul>
           <p style="margin: 8px 0 0; font-weight: bold;">Total estimé : ${formatPrice(data.totalPrice)}</p>
+          ${
+            data.depositAmount
+              ? `
+          <div style="margin: 12px 0 0; padding: 10px 16px; background: #e8f5e9; border-radius: 8px;">
+            <p style="margin: 0; font-weight: bold; color: #2e7d32;">✓ Acompte payé : ${formatPrice(data.depositAmount)}</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #666;">Solde à régler au salon : ${formatPrice(data.totalPrice - data.depositAmount)}</p>
+          </div>
+          `
+              : ''
+          }
         </div>
 
         <p style="font-size: 14px; color: #666;">

@@ -147,9 +147,15 @@ NEXT_PUBLIC_OFFER_TIER=standard|expert|premium
 ### Premium — Paiement en ligne
 
 - Tout Expert +
-- Acompte Stripe à la réservation (30% du montant, minimum 5€)
-- Statut paiement visible admin/staff
-- Webhook Stripe pour confirmation automatique
+- Acompte Stripe à la réservation (configurable via `NEXT_PUBLIC_DEPOSIT_PERCENTAGE`, défaut 30%)
+- Minimum d'acompte configurable via `NEXT_PUBLIC_DEPOSIT_MIN_EUROS` (défaut 5€)
+- Step 4 dans le booking wizard avec Stripe PaymentElement
+- PaymentIntent créé à `POST /api/bookings` quand `hasPayment()` est true
+- Webhook Stripe (`/api/webhooks/stripe`) pour confirmation idempotente
+- Confirmation client-side via `POST /api/bookings/:id/confirm-payment`
+- Page retour 3D Secure : `/reserver/paiement-retour`
+- Statut paiement sur le modèle Appointment (PaymentStatus enum)
+- Email de confirmation inclut montant acompte + solde restant
 
 ### Sous-domaines démos
 
@@ -165,6 +171,9 @@ coiffure-premium.marrynov.re
 - `hasBooking()`, `hasAuth()`, `hasAdmin()`, `hasStaff()`, `hasLoyalty()`, `hasPayment()`
 - `getPrimaryCta()` → `/reserver` (Expert+) ou `/contact` (Standard)
 - `calculateDeposit(totalCents)` → montant acompte (Premium)
+- `getDepositPercentage()` → % acompte depuis env (défaut 30)
+- `getDepositMinCents()` → minimum acompte en centimes depuis env (défaut 500)
+- `formatCentsToEuros(cents)` → "12,50 €"
 
 ### Upgrade client
 

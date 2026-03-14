@@ -16,6 +16,7 @@ import {
 import { Button, cn } from '@marrynov/ui';
 import type { BookingState, TeamMember } from '@/types/salon';
 import { registerEmailSchema } from '@/lib/validation';
+import { formatCentsToEuros } from '@/lib/offers';
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -171,6 +172,12 @@ export function StepConfirmation({
           Un email de confirmation a été envoyé à{' '}
           <strong className="text-text">{contact.email}</strong>.
         </p>
+        {state.depositPaid && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/5 px-4 py-2 text-sm font-medium text-success">
+            <CheckCircle2 size={14} aria-hidden="true" />
+            Acompte de {formatCentsToEuros(state.depositPaid)} encaissé
+          </div>
+        )}
       </div>
 
       {/* ── Recap cards ── */}

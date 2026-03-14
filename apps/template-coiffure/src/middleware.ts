@@ -19,6 +19,7 @@ function getTier(): OfferTier {
  */
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+
   const tier = getTier();
 
   // ── Tier Standard : bloquer les routes Expert/Premium ──────────────
@@ -31,7 +32,8 @@ export default auth((req) => {
       pathname.startsWith('/api/staff') ||
       pathname.startsWith('/api/account') ||
       pathname.startsWith('/api/me') ||
-      pathname.startsWith('/api/auth/register');
+      pathname.startsWith('/api/auth/register') ||
+      pathname.startsWith('/api/payments');
 
     if (isBlocked) {
       if (pathname.startsWith('/api/')) {
@@ -96,5 +98,7 @@ export const config = {
     '/api/account/:path*',
     '/api/me/:path*',
     '/api/auth/register',
+    '/api/payments/:path*',
+    // Note : /api/webhooks/* n'est PAS dans le matcher — Stripe signe ses propres requêtes
   ],
 };

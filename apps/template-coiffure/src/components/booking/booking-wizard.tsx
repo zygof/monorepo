@@ -1,16 +1,24 @@
 'use client';
 
-import { useReducer } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useReducer, useState, useCallback } from 'react';
+import { ArrowLeft, ArrowRight, CheckCircle2, CreditCard, Loader2 } from 'lucide-react';
 import { Button, cn } from '@marrynov/ui';
-import type { BookingState, BookingAction, Service, Product } from '@/types/salon';
+import type {
+  BookingState,
+  BookingAction,
+  Service,
+  Product,
+  BookingPaymentInfo,
+} from '@/types/salon';
 import { allServices, beautyProducts, teamMembers } from '@/config/salon.config';
 import { bookingContactSchema } from '@/lib/validation';
+import { hasPayment } from '@/lib/offers';
 import { BookingStepper } from './booking-stepper';
 import { BookingSummary } from './booking-summary';
 import { StepServices } from './step-services';
 import { StepDatetime } from './step-datetime';
 import { StepContact } from './step-contact';
+import { StepPayment } from './step-payment';
 import { StepConfirmation } from './step-confirmation';
 
 /* ── Reducer ─────────────────────────────────────────────────────────── */
@@ -34,6 +42,9 @@ function createInitialState(preService?: Service, preProduct?: Product): Booking
     date: null,
     timeSlot: null,
     contact: INITIAL_CONTACT,
+    bookingId: null,
+    paymentInfo: null,
+    depositPaid: null,
   };
 }
 
@@ -71,9 +82,16 @@ function bookingReducer(state: BookingState, action: BookingAction): BookingStat
       return { ...state, timeSlot: action.slot };
     case 'SET_CONTACT_FIELD':
       return { ...state, contact: { ...state.contact, [action.field]: action.value } };
+    case 'SET_BOOKING_ID':
+      return { ...state, bookingId: action.id };
+    case 'SET_PAYMENT_INFO':
+      return { ...state, paymentInfo: action.info };
+    case 'SET_DEPOSIT_PAID':
+      return { ...state, depositPaid: action.amount };
     case 'GO_NEXT':
       if (state.step === 1) return { ...state, step: 2 };
       if (state.step === 2) return { ...state, step: 3 };
+      if (state.step === 3) return { ...state, step: 4 };
       return state;
     case 'GO_PREV':
       if (state.step === 2) return { ...state, step: 1 };
@@ -112,6 +130,10 @@ export function BookingWizard({
   const [state, dispatch] = useReducer(bookingReducer, undefined, () =>
     createInitialState(preService, preProduct),
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const showPaymentStep = hasPayment();
 
   /* Validation per step */
   const isNextDisabled = (() => {
@@ -124,8 +146,68 @@ export function BookingWizard({
     return true;
   })();
 
-  const isLastStep = state.step === 3;
+  // Step 3 est le dernier step "formulaire" — le bouton Confirmer déclenche l'API
+  const isStep3 = state.step === 3;
 
+  /* ── API call — créer le RDV ─────────────────────────────────────── */
+  const handleSubmitBooking = useCallback(async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: state.date,
+          startTime: state.timeSlot,
+          serviceIds: state.selectedServices.map((s) => s.id),
+          stylistId: state.stylistId !== 'any' ? state.stylistId : undefined,
+          firstName: state.contact.firstName,
+          lastName: state.contact.lastName,
+          email: state.contact.email,
+          phone: state.contact.phone,
+          notes: state.contact.notes || undefined,
+          smsNotif: state.contact.smsNotif,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Erreur lors de la réservation');
+      }
+
+      const booking = await res.json();
+      dispatch({ type: 'SET_BOOKING_ID', id: booking.id });
+
+      // Premium : le booking retourne un clientSecret → step 4 (paiement)
+      if (booking.clientSecret) {
+        const paymentInfo: BookingPaymentInfo = {
+          bookingId: booking.id,
+          clientSecret: booking.clientSecret,
+          depositAmount: booking.depositAmount,
+          totalPrice: booking.totalPrice,
+        };
+        dispatch({ type: 'SET_PAYMENT_INFO', info: paymentInfo });
+        dispatch({ type: 'GO_NEXT' }); // step 3 → step 4
+      } else {
+        // Expert : booking confirmé directement
+        dispatch({ type: 'CONFIRM' }); // → 'confirmed'
+      }
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Erreur inconnue');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [state]);
+
+  /* ── Callback paiement terminé (Premium) ─────────────────────────── */
+  const handlePaymentComplete = useCallback((depositAmount: number) => {
+    dispatch({ type: 'SET_DEPOSIT_PAID', amount: depositAmount });
+    dispatch({ type: 'CONFIRM' });
+  }, []);
+
+  /* ── Confirmation screen ─────────────────────────────────────────── */
   if (state.step === 'confirmed') {
     return (
       <div className="mx-auto max-w-7xl px-6 lg:px-14">
@@ -143,9 +225,28 @@ export function BookingWizard({
     );
   }
 
+  /* ── Payment step (Premium, step 4) ──────────────────────────────── */
+  if (state.step === 4) {
+    return (
+      <div className="mx-auto max-w-7xl px-6 pb-20 lg:px-14">
+        <BookingStepper step={state.step} showPaymentStep />
+
+        <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start">
+          <StepPayment state={state} onPaymentComplete={handlePaymentComplete} />
+
+          {/* Desktop sticky summary */}
+          <div className="hidden lg:block sticky top-28">
+            <BookingSummary state={state} teamMembers={teamMembers} showDeposit />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Steps 1-3 ───────────────────────────────────────────────────── */
   return (
     <div className="mx-auto max-w-7xl px-6 pb-20 lg:px-14">
-      <BookingStepper step={state.step} />
+      <BookingStepper step={state.step} showPaymentStep={showPaymentStep} />
 
       <div className="grid gap-10 lg:grid-cols-[1fr_360px] lg:items-start">
         {/* Step content */}
@@ -165,8 +266,22 @@ export function BookingWizard({
 
           {/* Mobile summary (inline, above CTA) */}
           <div className="mt-8 lg:hidden">
-            <BookingSummary state={state} teamMembers={teamMembers} />
+            <BookingSummary
+              state={state}
+              teamMembers={teamMembers}
+              showDeposit={showPaymentStep && state.step === 3}
+            />
           </div>
+
+          {/* Erreur soumission */}
+          {submitError && (
+            <div
+              role="alert"
+              className="mt-4 rounded-xl border border-error/20 bg-error/5 px-4 py-3 text-sm text-error"
+            >
+              {submitError}
+            </div>
+          )}
 
           {/* Navigation */}
           <div
@@ -180,6 +295,7 @@ export function BookingWizard({
                 variant="ghost"
                 size="default"
                 onClick={() => dispatch({ type: 'GO_PREV' })}
+                disabled={isSubmitting}
                 className="gap-2 text-text-muted hover:text-text"
               >
                 <ArrowLeft size={16} aria-hidden="true" />
@@ -187,34 +303,53 @@ export function BookingWizard({
               </Button>
             )}
 
-            <Button
-              variant="default"
-              size="pill"
-              disabled={isNextDisabled}
-              onClick={() => {
-                if (isLastStep) dispatch({ type: 'CONFIRM' });
-                else dispatch({ type: 'GO_NEXT' });
-              }}
-              className="gap-2 shadow-primary-glow"
-            >
-              {isLastStep ? (
-                <>
-                  <CheckCircle2 size={16} aria-hidden="true" />
-                  Confirmer mon rendez-vous
-                </>
-              ) : (
-                <>
-                  Continuer
-                  <ArrowRight size={16} aria-hidden="true" />
-                </>
-              )}
-            </Button>
+            {isStep3 ? (
+              <Button
+                variant="default"
+                size="pill"
+                disabled={isNextDisabled || isSubmitting}
+                onClick={handleSubmitBooking}
+                className="gap-2 shadow-primary-glow"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                    Réservation en cours…
+                  </>
+                ) : showPaymentStep ? (
+                  <>
+                    <CreditCard size={16} aria-hidden="true" />
+                    Continuer vers le paiement
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} aria-hidden="true" />
+                    Confirmer mon rendez-vous
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="pill"
+                disabled={isNextDisabled}
+                onClick={() => dispatch({ type: 'GO_NEXT' })}
+                className="gap-2 shadow-primary-glow"
+              >
+                Continuer
+                <ArrowRight size={16} aria-hidden="true" />
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Desktop sticky summary */}
         <div className="hidden lg:block sticky top-28">
-          <BookingSummary state={state} teamMembers={teamMembers} />
+          <BookingSummary
+            state={state}
+            teamMembers={teamMembers}
+            showDeposit={showPaymentStep && state.step === 3}
+          />
         </div>
       </div>
     </div>

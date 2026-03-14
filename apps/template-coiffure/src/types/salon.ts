@@ -312,7 +312,16 @@ export interface BookingContact {
   acceptCgv: boolean;
 }
 
-export type BookingStep = 1 | 2 | 3 | 'confirmed';
+export type BookingStep = 1 | 2 | 3 | 4 | 'confirmed';
+
+export type PaymentStatus = 'not_required' | 'pending' | 'paid' | 'failed' | 'refunded' | 'expired';
+
+export interface BookingPaymentInfo {
+  bookingId: string;
+  clientSecret: string;
+  depositAmount: number; // centimes
+  totalPrice: number; // centimes
+}
 
 export interface BookingState {
   step: BookingStep;
@@ -323,6 +332,12 @@ export interface BookingState {
   date: string | null; // 'YYYY-MM-DD'
   timeSlot: string | null; // 'HH:MM'
   contact: BookingContact;
+  /** Rempli après création du booking (step 3 → API) */
+  bookingId: string | null;
+  /** Info paiement pour le step 4 (Premium uniquement) */
+  paymentInfo: BookingPaymentInfo | null;
+  /** Montant de l'acompte payé (confirmé) — affiché en confirmation */
+  depositPaid: number | null;
 }
 
 export type BookingAction =
@@ -334,6 +349,9 @@ export type BookingAction =
   | { type: 'SET_CONTACT_FIELD'; field: keyof BookingContact; value: string | boolean }
   | { type: 'GO_NEXT' }
   | { type: 'GO_PREV' }
+  | { type: 'SET_BOOKING_ID'; id: string }
+  | { type: 'SET_PAYMENT_INFO'; info: BookingPaymentInfo }
+  | { type: 'SET_DEPOSIT_PAID'; amount: number }
   | { type: 'CONFIRM' };
 
 /* ── SalonConfig ──────────────────────────────────────────────────────── */

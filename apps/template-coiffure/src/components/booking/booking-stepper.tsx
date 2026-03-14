@@ -4,26 +4,30 @@ import { Check } from 'lucide-react';
 import { cn } from '@marrynov/ui';
 import type { BookingStep } from '@/types/salon';
 
-const STEPS = [
+const BASE_STEPS = [
   { id: 1, label: 'Prestations' },
   { id: 2, label: 'Date & Styliste' },
   { id: 3, label: 'Coordonnées' },
 ] as const;
 
+const PAYMENT_STEP = { id: 4, label: 'Paiement' } as const;
+
 interface BookingStepperProps {
   step: BookingStep;
+  showPaymentStep?: boolean;
 }
 
-export function BookingStepper({ step }: BookingStepperProps) {
-  const current = step === 'confirmed' ? 4 : step;
+export function BookingStepper({ step, showPaymentStep }: BookingStepperProps) {
+  const steps = showPaymentStep ? [...BASE_STEPS, PAYMENT_STEP] : BASE_STEPS;
+  const current = step === 'confirmed' ? steps.length + 1 : step;
 
   return (
     <nav aria-label="Étapes de réservation" className="py-8">
       <ol className="flex items-center">
-        {STEPS.map((s, index) => {
+        {steps.map((s, index) => {
           const isCompleted = current > s.id;
           const isActive = current === s.id;
-          const isLast = index === STEPS.length - 1;
+          const isLast = index === steps.length - 1;
 
           return (
             <li key={s.id} className={cn('flex items-center', !isLast && 'flex-1')}>

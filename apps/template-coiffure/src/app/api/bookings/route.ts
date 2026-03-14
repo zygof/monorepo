@@ -6,6 +6,8 @@ import { sendBookingConfirmation } from '@/lib/emails';
 import { emailField, nameField, phoneField } from '@/lib/validation';
 import { staffEventBus } from '@/lib/event-bus';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
+import { hasPayment, calculateDeposit } from '@/lib/offers';
+import { getStripe } from '@/lib/stripe';
 
 /**
  * POST /api/bookings — Créer une réservation.
@@ -161,6 +163,9 @@ export async function POST(request: Request) {
           }
         }
 
+        const requiresPayment = hasPayment();
+        const depositAmount = requiresPayment ? calculateDeposit(totalPrice) : null;
+
         // Créer le RDV
         return tx.appointment.create({
           data: {
@@ -168,11 +173,14 @@ export async function POST(request: Request) {
             startTime: data.startTime,
             endTime,
             totalPrice,
-            status: 'CONFIRMED',
+            status: requiresPayment ? 'PENDING' : 'CONFIRMED',
             notes: data.notes,
             smsNotif: data.smsNotif,
             clientId,
             stylistId: data.stylistId,
+            // Paiement Premium
+            paymentStatus: requiresPayment ? 'PENDING' : 'NOT_REQUIRED',
+            depositAmount,
             services: {
               create: services.map((s) => ({
                 serviceId: s.id,
@@ -196,10 +204,101 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ce créneau n'est plus disponible" }, { status: 409 });
     }
 
-    // Notifier le staff en temps réel
+    // ── Premium : créer le PaymentIntent Stripe ─────────────────────
+    if (hasPayment() && appointment.depositAmount) {
+      const stripe = getStripe();
+      if (!stripe) {
+        // Stripe non configuré : annuler le RDV en PENDING
+        await db.appointment.update({
+          where: { id: appointment.id },
+          data: {
+            paymentStatus: 'FAILED',
+            status: 'CANCELLED',
+            cancelReason: 'Stripe non configuré',
+          },
+        });
+        return NextResponse.json(
+          { error: 'Le paiement en ligne est temporairement indisponible' },
+          { status: 503 },
+        );
+      }
+
+      try {
+        // Créer ou réutiliser le Stripe Customer
+        let stripeCustomerId: string | undefined;
+        const client = await db.user.findUnique({
+          where: { email: appointment.client.email },
+          select: { stripeCustomerId: true },
+        });
+
+        if (client?.stripeCustomerId) {
+          stripeCustomerId = client.stripeCustomerId;
+        } else {
+          const customer = await stripe.customers.create({
+            email: appointment.client.email,
+            name: `${appointment.client.firstName}`,
+            metadata: { source: 'marrynov', appointmentId: appointment.id },
+          });
+          stripeCustomerId = customer.id;
+          await db.user.update({
+            where: { email: appointment.client.email },
+            data: { stripeCustomerId: customer.id },
+          });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: appointment.depositAmount,
+          currency: 'eur',
+          customer: stripeCustomerId,
+          automatic_payment_methods: { enabled: true },
+          receipt_email: appointment.client.email,
+          metadata: {
+            appointmentId: appointment.id,
+            salonName: process.env.NEXT_PUBLIC_SALON_NAME ?? 'Salon',
+            services: appointment.services.map((s) => s.service.name).join(', '),
+            date: data.date,
+            startTime: data.startTime,
+          },
+          description: `Acompte RDV — ${appointment.services.map((s) => s.service.name).join(' + ')}`,
+        });
+
+        // Stocker le PaymentIntent ID sur le RDV
+        await db.appointment.update({
+          where: { id: appointment.id },
+          data: { stripePaymentIntentId: paymentIntent.id },
+        });
+
+        return NextResponse.json(
+          {
+            id: appointment.id,
+            date: data.date,
+            startTime: data.startTime,
+            endTime,
+            status: 'PENDING',
+            totalPrice,
+            paymentStatus: 'PENDING',
+            depositAmount: appointment.depositAmount,
+            clientSecret: paymentIntent.client_secret,
+          },
+          { status: 201 },
+        );
+      } catch (stripeError) {
+        console.error('[POST /api/bookings] Stripe error:', stripeError);
+        // Marquer le RDV comme échoué si le PaymentIntent ne peut pas être créé
+        await db.appointment.update({
+          where: { id: appointment.id },
+          data: { paymentStatus: 'FAILED' },
+        });
+        return NextResponse.json(
+          { error: 'Impossible de créer le paiement. Veuillez réessayer.' },
+          { status: 500 },
+        );
+      }
+    }
+
+    // ── Expert : confirmation directe (pas de paiement) ──────────────
     staffEventBus.emit('appointment_created', { appointmentId: appointment.id });
 
-    // Envoyer l'email de confirmation
     await sendBookingConfirmation({
       clientFirstName: appointment.client.firstName,
       clientEmail: appointment.client.email,

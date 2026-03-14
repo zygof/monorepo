@@ -1,9 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { Clock, CalendarDays, User, ShoppingBag, Scissors } from 'lucide-react';
+import { Clock, CalendarDays, User, ShoppingBag, Scissors, CreditCard } from 'lucide-react';
 import { cn } from '@marrynov/ui';
 import type { BookingState, TeamMember } from '@/types/salon';
+import { calculateDeposit, getDepositPercentage } from '@/lib/offers';
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('fr-FR', {
@@ -28,9 +29,16 @@ interface BookingSummaryProps {
   state: BookingState;
   teamMembers: TeamMember[];
   className?: string;
+  /** Afficher le détail de l'acompte (Premium tier, step 3+) */
+  showDeposit?: boolean;
 }
 
-export function BookingSummary({ state, teamMembers, className }: BookingSummaryProps) {
+export function BookingSummary({
+  state,
+  teamMembers,
+  className,
+  showDeposit,
+}: BookingSummaryProps) {
   const { selectedServices, selectedProducts, stylistId, date, timeSlot } = state;
 
   const servicesTotal = selectedServices.reduce((sum, s) => sum + s.startingPrice, 0);
@@ -174,6 +182,27 @@ export function BookingSummary({ state, teamMembers, className }: BookingSummary
               Le tarif définitif est confirmé lors du rendez-vous selon diagnostic.
             </p>
           </div>
+
+          {/* Acompte (Premium) */}
+          {showDeposit && grandTotal > 0 && (
+            <div className="border-t border-secondary/20 bg-secondary/5 -mx-6 -mb-6 mt-4 rounded-b-2xl px-6 py-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-secondary mb-2">
+                <CreditCard size={12} aria-hidden="true" />
+                Acompte à régler en ligne
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-text-subtle">
+                  {getDepositPercentage()}% du total estimé
+                </span>
+                <span className="text-lg font-bold text-secondary">
+                  {(calculateDeposit(grandTotal * 100) / 100).toFixed(2).replace('.', ',')} €
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-text-muted">
+                Le solde sera réglé au salon le jour du rendez-vous.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </aside>

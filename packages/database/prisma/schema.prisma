@@ -49,6 +49,16 @@ enum NotificationType {
   PASSWORD_RESET
 }
 
+enum PaymentStatus {
+  NOT_REQUIRED
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  EXPIRED
+}
+
 enum ModRequestType {
   REASSIGN
   REFUSE
@@ -117,6 +127,7 @@ model User {
   yearsExperience Int?
   quote          String?
   instagram      String?
+  stripeCustomerId String?   @unique
 
   @@index([email])
   @@index([role])
@@ -251,9 +262,18 @@ model Appointment {
   cancelledAt  DateTime?
   cancelReason String?
 
+  // Paiement (Premium tier uniquement)
+  paymentStatus         PaymentStatus @default(NOT_REQUIRED)
+  depositAmount         Int?          // montant acompte en centimes
+  depositPaidAt         DateTime?
+  stripePaymentIntentId String?       @unique
+  paymentMethod         String?       // "card", "apple_pay", "google_pay", etc.
+  stripeRefundId        String?
+
   @@index([date, status])
   @@index([clientId])
   @@index([stylistId, date])
+  @@index([stripePaymentIntentId])
 }
 
 model AppointmentService {

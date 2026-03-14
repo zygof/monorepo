@@ -59,19 +59,48 @@ export function hasPayment(): boolean {
 
 // ── Config acompte (Premium) ────────────────────────────────────────
 
-/** Pourcentage d'acompte demandé à la réservation (30% = standard marché coiffure) */
-export const DEPOSIT_PERCENTAGE = 30;
+/**
+ * Pourcentage d'acompte — configurable via NEXT_PUBLIC_DEPOSIT_PERCENTAGE.
+ * Fallback : 30% (standard marché coiffure pour réduire les no-shows).
+ */
+export function getDepositPercentage(): number {
+  const raw = process.env.NEXT_PUBLIC_DEPOSIT_PERCENTAGE;
+  if (raw) {
+    const parsed = Number(raw);
+    if (!Number.isNaN(parsed) && parsed > 0 && parsed <= 100) return parsed;
+  }
+  return 30;
+}
 
-/** Montant minimum d'acompte en centimes (ex: 500 = 5€) */
-export const DEPOSIT_MIN_CENTS = 500;
+/**
+ * Montant minimum d'acompte — configurable via NEXT_PUBLIC_DEPOSIT_MIN_EUROS.
+ * Fallback : 5€ (500 centimes).
+ */
+export function getDepositMinCents(): number {
+  const raw = process.env.NEXT_PUBLIC_DEPOSIT_MIN_EUROS;
+  if (raw) {
+    const parsed = Number(raw);
+    if (!Number.isNaN(parsed) && parsed > 0) return Math.round(parsed * 100);
+  }
+  return 500;
+}
 
 /**
  * Calcule le montant de l'acompte en centimes.
  * @param totalCents Montant total de la réservation en centimes
  */
 export function calculateDeposit(totalCents: number): number {
-  const deposit = Math.round(totalCents * (DEPOSIT_PERCENTAGE / 100));
-  return Math.max(deposit, DEPOSIT_MIN_CENTS);
+  const percentage = getDepositPercentage();
+  const minCents = getDepositMinCents();
+  const deposit = Math.round(totalCents * (percentage / 100));
+  return Math.max(deposit, minCents);
+}
+
+/**
+ * Formate un montant en centimes → "12,50 €"
+ */
+export function formatCentsToEuros(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',') + ' €';
 }
 
 // ── Navigation helpers ──────────────────────────────────────────────
