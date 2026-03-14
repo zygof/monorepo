@@ -1,0 +1,427 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// MARRYNOV — Schema Prisma partagé pour les templates salon de coiffure
+//
+// Ce schema est la source de vérité pour la BDD.
+// Conventions :
+//   - Prix en centimes (Int) pour éviter les erreurs de floating point
+//   - Dates en UTC, conversion en Indian/Reunion côté application
+//   - Soft delete via champ `active` pour les données référencées
+//   - Index sur les colonnes fréquemment filtrées
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  CLIENT
+  EMPLOYEE
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  WALK_IN
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_REMINDER_24H
+  BOOKING_REMINDER_1H
+  BOOKING_CANCELLED
+  BOOKING_MODIFIED
+  BOOKING_STYLIST_CHANGED
+  BOOKING_DELAY
+  REVIEW_REQUEST
+  WELCOME
+  PASSWORD_RESET
+}
+
+enum ModRequestType {
+  REASSIGN
+  REFUSE
+  RESCHEDULE
+  OTHER
+}
+
+enum ModRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ServiceCategory {
+  COUPE
+  COLORATION
+  SOIN
+  COIFFAGE
+  LISSAGE
+  EXTENSIONS
+  EVENEMENT
+  MARIAGE
+}
+
+enum GalleryCategory {
+  BALAYAGE
+  COULEUR
+  COUPE
+  LISSAGE
+  EXTENSIONS
+  MARIAGE
+  SOIN
+}
+
+// ── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  firstName     String
+  lastName      String
+  phone         String?
+  avatarUrl     String?
+  role          Role      @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  appointments     Appointment[] @relation("ClientAppointments")
+  assignedBookings Appointment[] @relation("StylistAppointments")
+  reviews          Review[]
+  loyalty          LoyaltyRecord?
+  accounts         Account[]
+  sessions         Session[]
+  notifications    Notification[]
+  modRequests      ModificationRequest[]
+  clientNotes      ClientNote[]  @relation("ClientNotes")
+  authoredNotes    ClientNote[]  @relation("AuthoredNotes")
+
+  // Employé : spécialités, bio, etc.
+  bio            String?
+  specialities   String[]  @default([])
+  imageUrl       String?
+  yearsExperience Int?
+  quote          String?
+  instagram      String?
+
+  @@index([email])
+  @@index([role])
+}
+
+// ── Auth (next-auth v5 adapter) ─────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── Service ─────────────────────────────────────────────────────────────────
+
+model Service {
+  id            String          @id @default(cuid())
+  slug          String          @unique
+  name          String
+  description   String          @db.Text
+  startingPrice Int             // centimes (4500 = 45€)
+  imageUrl      String?
+  imageAlt      String?
+  featured      Boolean         @default(false)
+  badge         String?
+  durationMin   Int             @default(60)
+  category      ServiceCategory
+  sortOrder     Int             @default(0)
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  appointments AppointmentService[]
+
+  @@index([category, active])
+  @@index([featured, active])
+}
+
+// ── Product ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String
+  description String   @db.Text
+  price       Int      // centimes
+  imageUrl    String?
+  imageAlt    String?
+  badge       String?
+  externalUrl String?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Event Package ───────────────────────────────────────────────────────────
+
+model EventPackage {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @db.Text
+  price       Int      // centimes
+  features    String[] // liste des prestations incluses
+  featured    Boolean  @default(false)
+  badge       String?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Appointment ─────────────────────────────────────────────────────────────
+
+model Appointment {
+  id            String            @id @default(cuid())
+  date          DateTime          @db.Date
+  startTime     String            // "10:30"
+  endTime       String            // "11:45" (calculé)
+  totalPrice    Int               // centimes
+  status        AppointmentStatus @default(PENDING)
+  notes         String?           @db.Text
+  internalNotes String?           @db.Text
+  smsNotif      Boolean           @default(true)
+
+  // Walk-in
+  isWalkIn Boolean @default(false)
+
+  // Retard
+  delayMinutes    Int?
+  delayNotifiedAt DateTime?
+
+  // Relations
+  clientId  String
+  client    User   @relation("ClientAppointments", fields: [clientId], references: [id])
+  stylistId String?
+  stylist   User?  @relation("StylistAppointments", fields: [stylistId], references: [id])
+  services  AppointmentService[]
+  review    Review?
+  modRequests ModificationRequest[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  @@index([date, status])
+  @@index([clientId])
+  @@index([stylistId, date])
+}
+
+model AppointmentService {
+  id             String      @id @default(cuid())
+  appointmentId  String
+  appointment    Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  serviceId      String
+  service        Service     @relation(fields: [serviceId], references: [id])
+  priceAtBooking Int         // prix figé au moment de la réservation (centimes)
+
+  @@unique([appointmentId, serviceId])
+}
+
+// ── Review ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id            String      @id @default(cuid())
+  rating        Int         // 1-5
+  comment       String      @db.Text
+  visible       Boolean     @default(true)
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  authorId      String
+  author        User        @relation(fields: [authorId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@index([authorId])
+  @@index([visible])
+}
+
+// ── Loyalty ─────────────────────────────────────────────────────────────────
+
+model LoyaltyRecord {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  currentVisits Int       @default(0)
+  totalVisits   Int       @default(0)
+  rewardsEarned Int       @default(0)
+  lastVisitAt   DateTime?
+  updatedAt     DateTime  @updatedAt
+}
+
+// ── Gallery ─────────────────────────────────────────────────────────────────
+
+model GalleryItem {
+  id          String          @id @default(cuid())
+  imageUrl    String
+  imageAlt    String
+  category    GalleryCategory
+  title       String
+  description String?
+  stylistId   String?
+  active      Boolean         @default(true)
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+}
+
+// ── Salon Settings (clé-valeur) ─────────────────────────────────────────────
+
+model SalonSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+// ── Schedule (horaires hebdomadaires) ───────────────────────────────────────
+
+model ScheduleSlot {
+  id        String  @id @default(cuid())
+  dayOfWeek Int     // 0=Lundi, 1=Mardi, ..., 6=Dimanche
+  openTime  String? // "09:00" — null = fermé
+  closeTime String? // "18:30"
+
+  @@unique([dayOfWeek])
+}
+
+// ── Blocked Slots (congés, fermetures exceptionnelles) ──────────────────────
+
+model BlockedSlot {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  startTime String?  // null = journée entière
+  endTime   String?
+  reason    String?
+  stylistId String?  // null = tout le salon
+  createdAt DateTime @default(now())
+
+  @@index([date])
+  @@index([stylistId, date])
+}
+
+// ── Notification Queue ──────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id])
+  email     String
+  payload   Json
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime         @default(now())
+
+  @@index([sentAt, createdAt])
+  @@index([type])
+}
+
+// ── Promo Offers ────────────────────────────────────────────────────────────
+
+model PromoOffer {
+  id          String   @id @default(cuid())
+  badge       String
+  title       String
+  description String   @db.Text
+  ctaLabel    String
+  ctaHref     String
+  active      Boolean  @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ── Loyalty Config (paramètres programme fidélité) ──────────────────────────
+
+model LoyaltyConfig {
+  id           String @id @default("default")
+  targetVisits Int    @default(8)
+  reward       String @default("réduction de 10% sur la prestation de votre choix")
+  discount     String @default("-10%")
+  updatedAt    DateTime @updatedAt
+}
+
+// ── Modification Request (demandes stylistes → admin) ─────────────────────────
+
+model ModificationRequest {
+  id            String           @id @default(cuid())
+  appointmentId String
+  appointment   Appointment      @relation(fields: [appointmentId], references: [id])
+  requesterId   String
+  requester     User             @relation(fields: [requesterId], references: [id])
+  type          ModRequestType
+  reason        String           @db.Text
+  status        ModRequestStatus @default(PENDING)
+  adminNote     String?          @db.Text
+  processedAt   DateTime?
+  processedBy   String?
+  createdAt     DateTime         @default(now())
+
+  @@index([status])
+  @@index([appointmentId])
+  @@index([requesterId])
+}
+
+// ── Client Notes (notes stylistes/admin sur les clients) ──────────────────────
+
+model ClientNote {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    User     @relation("ClientNotes", fields: [clientId], references: [id])
+  authorId  String
+  author    User     @relation("AuthoredNotes", fields: [authorId], references: [id])
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, createdAt])
+  @@index([authorId])
+}

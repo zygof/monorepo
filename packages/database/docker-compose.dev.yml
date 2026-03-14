@@ -1,0 +1,50 @@
+# Infrastructure locale de développement MARRYNOV
+# Usage : docker compose -f packages/database/docker-compose.dev.yml up -d
+#
+# PostgreSQL 16-alpine (port 5433 pour ne pas confliter avec n8n sur 5432)
+# Redis 7-alpine (port 6380 pour ne pas confliter avec un éventuel Redis système)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: marrynov-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: marrynov
+      POSTGRES_PASSWORD: marrynov
+      POSTGRES_DB: marryhair
+    ports:
+      - "5433:5432"
+    volumes:
+      - marrynov_pgdata:/var/lib/postgresql/data
+    networks:
+      - marrynov-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marrynov -d marryhair"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: marrynov-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - marrynov_redisdata:/data
+    networks:
+      - marrynov-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  marrynov_pgdata:
+  marrynov_redisdata:
+
+networks:
+  marrynov-dev:
+    driver: bridge

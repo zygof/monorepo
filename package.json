@@ -12,6 +12,11 @@
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "db:dev": "bash packages/database/scripts/dev-up.sh",
+    "db:reset": "bash packages/database/scripts/dev-reset.sh",
+    "db:studio": "pnpm --filter @marrynov/database db:studio",
+    "db:migrate": "pnpm --filter @marrynov/database db:migrate",
+    "db:seed": "pnpm --filter @marrynov/database db:seed",
     "prepare": "husky"
   },
   "devDependencies": {
