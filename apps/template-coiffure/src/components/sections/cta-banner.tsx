@@ -2,15 +2,16 @@ import type { JSX } from 'react';
 import Link from 'next/link';
 import { Button } from '@marrynov/ui';
 import { salonConfig } from '@/config/salon.config';
+import { hasBooking, getPrimaryCta } from '@/lib/offers';
 
 /**
  * Bandeau CTA — fond primary, titre, description, bouton gold.
- * Incite à la prise de rendez-vous.
- *
- * TODO : A/B tester le texte du bouton et le message d'urgence.
+ * Standard : incite au contact. Expert+ : incite à la réservation.
  */
 export function CtaBanner(): JSX.Element {
-  const { bookingUrl, ctaBanner } = salonConfig;
+  const { ctaBanner } = salonConfig;
+  const showBooking = hasBooking();
+  const cta = getPrimaryCta();
 
   return (
     <section
@@ -31,10 +32,14 @@ export function CtaBanner(): JSX.Element {
 
       <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
         <h2 id="cta-heading" className="font-serif text-4xl font-bold text-white">
-          {ctaBanner.heading}
+          {showBooking ? ctaBanner.heading : 'Envie d\u2019un nouveau look\u00a0?'}
         </h2>
 
-        <p className="max-w-2xl text-lg leading-relaxed text-white/80">{ctaBanner.description}</p>
+        <p className="max-w-2xl text-lg leading-relaxed text-white/80">
+          {showBooking
+            ? ctaBanner.description
+            : 'Contactez-nous pour discuter de vos envies et prendre rendez-vous par téléphone.'}
+        </p>
 
         <Button
           asChild
@@ -42,7 +47,7 @@ export function CtaBanner(): JSX.Element {
           size="pill"
           className="shadow-lg hover:bg-secondary-dark hover:shadow-xl focus-visible:outline-white"
         >
-          <Link href={bookingUrl}>{ctaBanner.buttonLabel}</Link>
+          <Link href={cta.href}>{showBooking ? ctaBanner.buttonLabel : 'Nous Contacter'}</Link>
         </Button>
       </div>
     </section>

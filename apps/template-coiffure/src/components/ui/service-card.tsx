@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button, Badge, cn } from '@marrynov/ui';
 import type { Service } from '@/types/salon';
+import { hasBooking } from '@/lib/offers';
 
 interface ServiceCardProps {
   service: Service;
@@ -71,14 +72,18 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
         </h3>
         <p className="mb-6 flex-1 text-base leading-relaxed text-text-subtle">{description}</p>
 
-        {/* CTA */}
+        {/* CTA — Réserver (Expert+) ou Voir détails (Standard) */}
         <Button
           asChild
           variant={featured ? 'default' : 'outline'}
           size="pill-sm"
           className={cn('w-full', featured ? 'hover:bg-primary-dark' : '')}
         >
-          <Link href={`${bookingUrl}?service=${service.slug}`}>Réserver</Link>
+          {hasBooking() ? (
+            <Link href={`${bookingUrl}?service=${service.slug}`}>Réserver</Link>
+          ) : (
+            <Link href={`/contact?service=${service.slug}`}>Nous Contacter</Link>
+          )}
         </Button>
       </div>
     </article>

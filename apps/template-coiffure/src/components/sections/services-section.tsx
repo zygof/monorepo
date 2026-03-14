@@ -4,15 +4,15 @@ import { ArrowRight } from 'lucide-react';
 import { ServiceCard } from '@/components/ui/service-card';
 import { SectionHeader } from '@/components/ui/section-header';
 import { salonConfig, featuredServices } from '@/config/salon.config';
+import { getPrimaryCta } from '@/lib/offers';
 
 /**
  * Section Services — 3 cartes services signatures.
- *
- * TODO (backend) : remplacer featuredServices par un fetch
- *   const services = await fetch('/api/services?featured=true&limit=3').then(r => r.json())
+ * Les CTAs des cartes s'adaptent au tier (réservation ou contact).
  */
 export function ServicesSection(): JSX.Element {
-  const { bookingUrl, servicesUrl, servicesSection } = salonConfig;
+  const { servicesUrl, servicesSection } = salonConfig;
+  const cta = getPrimaryCta();
 
   return (
     <section
@@ -30,7 +30,7 @@ export function ServicesSection(): JSX.Element {
         {/* Grille des 3 services */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
           {featuredServices.map((service) => (
-            <ServiceCard key={service.id} service={service} bookingUrl={bookingUrl} />
+            <ServiceCard key={service.id} service={service} bookingUrl={cta.href} />
           ))}
         </div>
 

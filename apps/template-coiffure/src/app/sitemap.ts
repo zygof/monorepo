@@ -1,10 +1,11 @@
 import type { MetadataRoute } from 'next';
 import { salonConfig } from '@/config/salon.config';
+import { hasBooking } from '@/lib/offers';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = salonConfig.seo.siteUrl;
 
-  return [
+  const pages: MetadataRoute.Sitemap = [
     {
       url: base,
       lastModified: new Date(),
@@ -41,5 +42,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly',
       priority: 0.2,
     },
+    {
+      url: `${base}/cgv`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    },
+    {
+      url: `${base}/confidentialite`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    },
   ];
+
+  // Expert+ : ajouter la page de réservation
+  if (hasBooking()) {
+    pages.push({
+      url: `${base}/reserver`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    });
+  }
+
+  return pages;
 }

@@ -1,26 +1,22 @@
 import type { JSX } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, Clock, Layers, ArrowRight, Calendar } from 'lucide-react';
+import { Star, Clock, Layers, ArrowRight, Calendar, Phone } from 'lucide-react';
 import { Button } from '@marrynov/ui';
 import { TrustBadgePill } from '@/components/ui/trust-badge-pill';
 import { salonConfig } from '@/config/salon.config';
+import { hasBooking, getPrimaryCta } from '@/lib/offers';
 
 /**
  * Hero Section — première section visible au chargement.
- *
- * Composition :
- *  - Image full-bleed avec dégradé blanc gauche
- *  - Trust badge pills (note, ancienneté, spécialité)
- *  - H1 avec dégradé coloré sur la 2ème ligne
- *  - Deux CTAs via Button asChild (pas de <a> dans <button>)
- *  - Bandeau d'urgence (disponibilités)
- *
- * TODO : le bandeau d'urgence doit être dynamique (API disponibilités)
- * TODO : image hero à remplacer par asset validé en production
+ * S'adapte au tier MARRYNOV :
+ * - Standard : CTA → contact/téléphone, pas de bandeau urgence
+ * - Expert+  : CTA → réservation, bandeau d'urgence disponibilités
  */
 export function HeroSection(): JSX.Element {
-  const { stats, bookingUrl, servicesUrl, hero } = salonConfig;
+  const { stats, servicesUrl, hero, contact } = salonConfig;
+  const showBooking = hasBooking();
+  const cta = getPrimaryCta();
 
   return (
     <section
@@ -108,9 +104,13 @@ export function HeroSection(): JSX.Element {
                 size="pill"
                 className="w-full shadow-primary-glow hover:bg-primary-dark sm:w-auto"
               >
-                <Link href={bookingUrl}>
-                  {hero.ctaPrimary}
-                  <Calendar size={16} aria-hidden="true" />
+                <Link href={cta.href}>
+                  {showBooking ? hero.ctaPrimary : cta.label}
+                  {showBooking ? (
+                    <Calendar size={16} aria-hidden="true" />
+                  ) : (
+                    <Phone size={16} aria-hidden="true" />
+                  )}
                 </Link>
               </Button>
 
@@ -119,25 +119,43 @@ export function HeroSection(): JSX.Element {
               </Button>
             </div>
 
-            {/* Bandeau urgence — TODO: rendre dynamique via API disponibilités */}
-            <div
-              className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface px-4 py-2 shadow-pill"
-              role="status"
-              aria-live="polite"
-            >
-              <span aria-hidden="true">⏰</span>
-              <p className="text-sm">
-                <span className="font-semibold text-primary">{hero.urgencyMessage}</span>
-                <span className="text-text-subtle"> {hero.urgencyDate} — </span>
-                <Link
-                  href={bookingUrl}
-                  className="font-medium text-secondary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
-                >
-                  {hero.urgencyCta}
-                </Link>
-              </p>
-              <ArrowRight size={14} className="text-secondary" aria-hidden="true" />
-            </div>
+            {/* Bandeau urgence — Expert+ uniquement */}
+            {showBooking && (
+              <div
+                className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface px-4 py-2 shadow-pill"
+                role="status"
+                aria-live="polite"
+              >
+                <span aria-hidden="true">⏰</span>
+                <p className="text-sm">
+                  <span className="font-semibold text-primary">{hero.urgencyMessage}</span>
+                  <span className="text-text-subtle"> {hero.urgencyDate} — </span>
+                  <Link
+                    href="/reserver"
+                    className="font-medium text-secondary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
+                  >
+                    {hero.urgencyCta}
+                  </Link>
+                </p>
+                <ArrowRight size={14} className="text-secondary" aria-hidden="true" />
+              </div>
+            )}
+
+            {/* Bandeau contact — Standard uniquement */}
+            {!showBooking && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface px-4 py-2 shadow-pill">
+                <Phone size={14} className="text-primary" aria-hidden="true" />
+                <p className="text-sm">
+                  <span className="text-text-subtle">Appelez-nous au </span>
+                  <a
+                    href={`tel:${contact.phoneRaw}`}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    {contact.phone}
+                  </a>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

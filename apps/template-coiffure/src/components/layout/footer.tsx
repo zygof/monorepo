@@ -2,14 +2,17 @@ import type { JSX } from 'react';
 import Link from 'next/link';
 import { Scissors, MapPin, Phone, MessageCircle } from 'lucide-react';
 import { salonConfig } from '@/config/salon.config';
+import { hasBooking, hasAuth, getPrimaryCta } from '@/lib/offers';
 
 /**
  * Footer — 4 colonnes : Marque, Contact, Horaires, Liens Rapides.
- * Server Component.
+ * Server Component. S'adapte au tier MARRYNOV.
  */
 export function Footer(): JSX.Element {
-  const { name, description, contact, schedule, navLinks, bookingUrl, copyright, footerLabels } =
-    salonConfig;
+  const { name, description, contact, schedule, navLinks, copyright, footerLabels } = salonConfig;
+  const showBooking = hasBooking();
+  const showAuth = hasAuth();
+  const cta = getPrimaryCta();
 
   const focusClasses =
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
@@ -146,10 +149,10 @@ export function Footer(): JSX.Element {
             <ul className="flex flex-col gap-3">
               <li>
                 <Link
-                  href={bookingUrl}
+                  href={cta.href}
                   className={`text-base text-text-subtle hover:text-primary transition-colors ${focusClasses}`}
                 >
-                  {footerLabels.bookOnline}
+                  {showBooking ? footerLabels.bookOnline : 'Nous Contacter'}
                 </Link>
               </li>
               {navLinks.slice(1).map((link) => (
@@ -162,6 +165,16 @@ export function Footer(): JSX.Element {
                   </Link>
                 </li>
               ))}
+              {showAuth && (
+                <li>
+                  <Link
+                    href="/compte"
+                    className={`text-base text-text-subtle hover:text-primary transition-colors ${focusClasses}`}
+                  >
+                    Mon Compte
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link
                   href="/mentions-legales"
@@ -176,6 +189,14 @@ export function Footer(): JSX.Element {
                   className={`text-base text-text-subtle hover:text-primary transition-colors ${focusClasses}`}
                 >
                   {footerLabels.termsAndConditions}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/confidentialite"
+                  className={`text-base text-text-subtle hover:text-primary transition-colors ${focusClasses}`}
+                >
+                  {footerLabels.privacyPolicy}
                 </Link>
               </li>
             </ul>

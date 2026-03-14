@@ -1,19 +1,25 @@
 import type { JSX } from 'react';
 import Link from 'next/link';
-import { Scissors, Phone, User } from 'lucide-react';
+import { Scissors, Phone } from 'lucide-react';
 import { Button } from '@marrynov/ui';
 import { salonConfig } from '@/config/salon.config';
+import { hasBooking, hasAuth, getPrimaryCta } from '@/lib/offers';
 import { MobileMenu } from './mobile-menu';
 import { DesktopNavLink } from './nav-link';
+import { UserMenu } from './user-menu';
 
 /**
  * Header sticky avec backdrop blur.
- * Server Component — l'interactivité mobile est déléguée à MobileMenu (Client).
+ * Server Component — l'interactivité est déléguée aux Client Components
+ * (MobileMenu, UserMenu).
  *
- * TODO (auth) : remplacer l'icône User par le menu compte connecté.
+ * S'adapte au tier : Standard masque le CTA booking et le UserMenu.
  */
 export function Header(): JSX.Element {
-  const { name, contact, navLinks, bookingUrl } = salonConfig;
+  const { name, contact, navLinks } = salonConfig;
+  const showBooking = hasBooking();
+  const showAuth = hasAuth();
+  const cta = getPrimaryCta();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-white/95 backdrop-blur-md">
@@ -46,30 +52,23 @@ export function Header(): JSX.Element {
             <span>{contact.phone}</span>
           </a>
 
-          {/* Compte utilisateur — TODO: connecter à next-auth */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="hidden lg:flex rounded-full border-border bg-primary-light hover:border-primary"
-            aria-label="Mon compte"
-          >
-            <User size={16} aria-hidden="true" />
-          </Button>
-
-          {/* CTA Réserver desktop */}
+          {/* CTA principal — Réserver (Expert+) ou Nous Contacter (Standard) */}
           <Button
             asChild
             variant="secondary"
             size="pill-sm"
             className="hidden lg:inline-flex shadow-sm hover:bg-secondary-dark"
           >
-            <Link href={bookingUrl}>Prendre RDV</Link>
+            <Link href={cta.href}>{cta.label}</Link>
           </Button>
+
+          {/* Compte utilisateur — Expert+ uniquement */}
+          {showAuth && <UserMenu />}
 
           {/* Menu mobile */}
           <MobileMenu
             navLinks={navLinks}
-            bookingUrl={bookingUrl}
+            bookingUrl={showBooking ? '/reserver' : '/contact'}
             phone={contact.phone}
             phoneRaw={contact.phoneRaw}
           />

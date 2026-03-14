@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
 import { Button, Badge, cn } from '@marrynov/ui';
 import type { Product } from '@/types/salon';
+import { hasBooking } from '@/lib/offers';
 
 interface ProductCardProps {
   product: Product;
@@ -75,7 +76,7 @@ export function ProductCard({ product, bookingUrl, className }: ProductCardProps
               Commander en ligne
             </Link>
           </Button>
-        ) : bookingUrl ? (
+        ) : bookingUrl && hasBooking() ? (
           <Button
             asChild
             variant="outline"

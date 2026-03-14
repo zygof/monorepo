@@ -44,7 +44,7 @@
 - `n8n.marrynov.re` → Automatisation n8n (SQLite)
 - `uptime.marrynov.re` → Monitoring Uptime Kuma 2.2.1
 - `marrynov.re` → Site vitrine (déploiement à venir)
-- `[template].marrynov.re` → Démos commerciales (à déployer)
+- `[template]-[tier].marrynov.re` → Démos commerciales (ex: coiffure-expert.marrynov.re)
 
 ## Services Dokploy (projet : infrastructure)
 
@@ -119,6 +119,57 @@ docker exec -it [postgres-ID] psql -U marrynov -d marrynov -c "
 "
 ```
 
+## Offres MARRYNOV — 3 tiers par template
+
+Chaque template (coiffure, pizza, restaurant, location-voiture, boutique) propose **3 niveaux d'offre**.
+Le tier est déterminé par une **unique variable d'env** : `NEXT_PUBLIC_OFFER_TIER`.
+
+```
+NEXT_PUBLIC_OFFER_TIER=standard|expert|premium
+```
+
+### Standard — Présence digitale
+
+- Site vitrine : accueil, services, galerie, équipe, contact, pages légales
+- Pas de réservation en ligne, pas d'auth, pas d'admin/staff
+- CTAs redirigent vers `/contact` ou le téléphone
+- Middleware bloque `/reserver`, `/compte`, `/admin`, `/staff` et APIs associées
+
+### Expert — Réservation & Gestion
+
+- Tout Standard +
+- Réservation en ligne (booking wizard, calendrier, créneaux)
+- Authentification (comptes clients, login/signup, Google OAuth)
+- Admin back-office (services, RDV, galerie, équipe, horaires, avis, produits)
+- Espace staff/styliste (agenda, clients, notes, walk-in)
+- Programme de fidélité
+
+### Premium — Paiement en ligne
+
+- Tout Expert +
+- Acompte Stripe à la réservation (30% du montant, minimum 5€)
+- Statut paiement visible admin/staff
+- Webhook Stripe pour confirmation automatique
+
+### Sous-domaines démos
+
+```
+coiffure-standard.marrynov.re
+coiffure-expert.marrynov.re
+coiffure-premium.marrynov.re
+```
+
+### Fichier clé : `src/lib/offers.ts`
+
+- `getOfferTier()` → lit `NEXT_PUBLIC_OFFER_TIER`, fallback 'expert'
+- `hasBooking()`, `hasAuth()`, `hasAdmin()`, `hasStaff()`, `hasLoyalty()`, `hasPayment()`
+- `getPrimaryCta()` → `/reserver` (Expert+) ou `/contact` (Standard)
+- `calculateDeposit(totalCents)` → montant acompte (Premium)
+
+### Upgrade client
+
+Changer `NEXT_PUBLIC_OFFER_TIER` dans le `.env` → redeploy. C'est tout.
+
 ## Clients — process complet
 
 - Format slug : `[prenom]-[secteur]` (ex: marie-coiffure, dupont-pizza)
@@ -126,6 +177,7 @@ docker exec -it [postgres-ID] psql -U marrynov -d marrynov -c "
 - Staging : `[prenom].marrynov.re`
 - Prod : `[domaine-client.re]`
 - Config client : `config/client.config.ts` (SEUL fichier à modifier)
+- Offre client : `NEXT_PUBLIC_OFFER_TIER` dans `.env` (standard, expert, premium)
 - DB : `client_[prenom]_[secteur]` (isolée dans postgres-shared)
 
 ## Design tokens — workflow Figma → Code

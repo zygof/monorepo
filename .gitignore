@@ -36,5 +36,8 @@ pnpm-debug.log*
 *.db
 *.db-journal
 
+# Claude Code — mémoire locale (pas de données perso dans le repo)
+.claude/projects/
+
 # Métadonnées Windows ADS (WSL2 — Zone.Identifier)
 *:Zone.Identifier

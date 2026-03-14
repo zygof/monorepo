@@ -9,6 +9,7 @@ import { ServicesCatalog } from '@/components/sections/services-catalog';
 import { EventPackageCard } from '@/components/ui/event-package-card';
 import { ProductCard } from '@/components/ui/product-card';
 import { salonConfig, allServices, eventPackages, beautyProducts } from '@/config/salon.config';
+import { getPrimaryCta, hasBooking } from '@/lib/offers';
 
 /* ── Metadata SEO ──────────────────────────────────────────────────────── */
 
@@ -83,7 +84,8 @@ function ServicesJsonLd(): JSX.Element {
 /* ── Page ──────────────────────────────────────────────────────────────── */
 
 export default function ServicesPage(): JSX.Element {
-  const { bookingUrl, contact } = salonConfig;
+  const { contact } = salonConfig;
+  const bookingUrl = getPrimaryCta().href;
 
   return (
     <>
@@ -136,7 +138,7 @@ export default function ServicesPage(): JSX.Element {
                 href={bookingUrl}
                 className="font-medium text-secondary underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary"
               >
-                Prendre rendez-vous →
+                {hasBooking() ? 'Prendre rendez-vous →' : 'Nous contacter →'}
               </Link>
             </p>
           </div>

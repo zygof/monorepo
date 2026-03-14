@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Menu, X, Phone, Calendar } from 'lucide-react';
 import { Button } from '@marrynov/ui';
 import type { NavLink } from '@/types/salon';
+import { hasAuth, hasBooking } from '@/lib/offers';
 import { MobileNavLink } from './nav-link';
 
 interface MobileMenuProps {
@@ -16,40 +17,66 @@ interface MobileMenuProps {
 
 /**
  * Menu de navigation mobile — Client Component (état open/close).
- * Extrait du Header (Server Component) pour isoler l'interactivité.
- *
- * Comportement :
- *  - Hamburger ↔ X selon l'état ouvert/fermé
- *  - Drawer slide-down sous le header, fond blanc
- *  - Fermeture sur clic lien, bouton CTA ou touche Escape
- *  - Scroll du body bloqué quand le menu est ouvert
+ * S'adapte au tier : Standard masque les sections auth/booking.
  */
 export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const showAuth = hasAuth();
+  const showBooking = hasBooking();
+  const menuRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const close = () => setIsOpen(false);
+  const close = useCallback(() => setIsOpen(false), []);
 
-  /* Escape key + scroll lock */
+  /* Escape key + scroll lock + focus trap */
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') {
+        close();
+        triggerRef.current?.focus();
+        return;
+      }
+
+      // Focus trap : Tab/Shift+Tab dans le menu
+      if (e.key === 'Tab' && menuRef.current) {
+        const focusable = menuRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+
+        const first = focusable[0]!;
+        const last = focusable[focusable.length - 1]!;
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     document.body.style.overflow = 'hidden';
 
+    // Déplacer le focus dans le menu à l'ouverture
+    const firstLink = menuRef.current?.querySelector<HTMLElement>('a[href], button');
+    firstLink?.focus();
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, close]);
 
   return (
     <>
       {/* Bouton hamburger */}
       <Button
+        ref={triggerRef}
         variant="ghost"
         size="icon"
         className="lg:hidden rounded-md"
@@ -76,6 +103,7 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
 
       {/* Drawer */}
       <nav
+        ref={menuRef}
         id="mobile-menu"
         aria-label="Navigation mobile"
         className={[
@@ -94,6 +122,12 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
           {/* Séparateur */}
           <div className="my-2 h-px bg-border" aria-hidden="true" />
 
+          {/* Section auth — Expert+ uniquement */}
+          {showAuth && <MobileMenuAuth onClose={close} />}
+
+          {/* Séparateur */}
+          <div className="my-1 h-px bg-border" aria-hidden="true" />
+
           {/* Téléphone */}
           <a
             href={`tel:${phoneRaw}`}
@@ -105,8 +139,8 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
             {phone}
           </a>
 
-          {/* CTA Réserver */}
-          <div className="mt-2">
+          {/* CTA */}
+          <div className="mt-2 flex flex-col gap-2">
             <Button
               asChild
               variant="secondary"
@@ -114,13 +148,105 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
               className="w-full shadow-sm hover:bg-secondary-dark"
             >
               <Link href={bookingUrl} onClick={close}>
-                Prendre RDV
-                <Calendar size={16} aria-hidden="true" />
+                {showBooking ? 'Prendre RDV' : 'Nous Contacter'}
+                {showBooking && <Calendar size={16} aria-hidden="true" />}
               </Link>
             </Button>
           </div>
         </div>
       </nav>
     </>
+  );
+}
+
+// ── Sous-composant auth (Expert+) ────────────────────────────────────
+// Isolé pour que useSession/signOut ne soient importés que quand l'auth est active.
+
+import { useSession, signOut } from 'next-auth/react';
+import { User, Heart, LogOut, Shield, Scissors } from 'lucide-react';
+import { useAuthModal } from '@/components/providers';
+
+function MobileMenuAuth({ onClose }: { onClose: () => void }) {
+  const { data: session } = useSession();
+  const { openAuth } = useAuthModal();
+
+  if (session?.user) {
+    return (
+      <>
+        <Link
+          href="/compte"
+          onClick={onClose}
+          className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-text transition-colors hover:bg-primary-light"
+        >
+          <User size={16} aria-hidden="true" />
+          Mon compte
+        </Link>
+        <Link
+          href="/compte?tab=appointments"
+          onClick={onClose}
+          className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-text transition-colors hover:bg-primary-light"
+        >
+          <Calendar size={16} aria-hidden="true" />
+          Mes rendez-vous
+        </Link>
+        <Link
+          href="/compte?tab=loyalty"
+          onClick={onClose}
+          className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-text transition-colors hover:bg-primary-light"
+        >
+          <Heart size={16} aria-hidden="true" />
+          Ma fidélité
+        </Link>
+        {/* Liens staff/admin */}
+        {(session.user.role === 'ADMIN' || session.user.role === 'EMPLOYEE') && (
+          <>
+            <div className="my-1 h-px bg-border" aria-hidden="true" />
+            {session.user.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                onClick={onClose}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-primary transition-colors hover:bg-primary-light"
+              >
+                <Shield size={16} aria-hidden="true" />
+                Administration
+              </Link>
+            )}
+            <Link
+              href="/staff"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-primary transition-colors hover:bg-primary-light"
+            >
+              <Scissors size={16} aria-hidden="true" />
+              Espace styliste
+            </Link>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            signOut({ callbackUrl: '/' });
+          }}
+          className="flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-red-600 transition-colors hover:bg-red-50"
+        >
+          <LogOut size={16} aria-hidden="true" />
+          Se déconnecter
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onClose();
+        openAuth('login');
+      }}
+      className="flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-base font-medium text-text transition-colors hover:bg-primary-light"
+    >
+      <User size={16} aria-hidden="true" />
+      Mon compte
+    </button>
   );
 }

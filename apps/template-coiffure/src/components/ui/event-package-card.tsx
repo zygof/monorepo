@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button, Badge, cn } from '@marrynov/ui';
 import type { EventPackage } from '@/types/salon';
+import { hasBooking } from '@/lib/offers';
 
 interface EventPackageCardProps {
   pkg: EventPackage;
@@ -115,7 +116,7 @@ export function EventPackageCard({
             : 'hover:bg-secondary-dark',
         )}
       >
-        <Link href={bookingUrl}>Réserver ce forfait</Link>
+        <Link href={bookingUrl}>{hasBooking() ? 'Réserver ce forfait' : 'Nous contacter'}</Link>
       </Button>
     </article>
   );
