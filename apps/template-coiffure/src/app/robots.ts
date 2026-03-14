@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/api/',
+      disallow: ['/api/', '/admin/', '/staff/', '/compte/', '/reset-password/'],
     },
     sitemap: `${salonConfig.seo.siteUrl}/sitemap.xml`,
   };

@@ -1,4 +1,11 @@
-import type { SalonConfig, Service, EventPackage, Product, TeamMember } from '@/types/salon';
+import type {
+  SalonConfig,
+  Service,
+  EventPackage,
+  Product,
+  TeamMember,
+  GalleryItem,
+} from '@/types/salon';
 
 /**
  * Configuration du salon — source de vérité unique.
@@ -89,6 +96,51 @@ export const salonConfig: SalonConfig = {
     buttonLabel: 'Réserver en 2 minutes',
   },
 
+  teamSection: {
+    heading: 'Notre Équipe de Stylistes',
+    description:
+      'Des artistes passionnés, formés aux dernières techniques et dédiés à sublimer chaque texture de cheveux. Découvrez les talents qui font la renommée de Beauté Créole.',
+    valuesHeading: 'Notre Philosophie',
+    valuesDescription:
+      'Chaque visite est une expérience unique. Nos valeurs guident chaque geste, chaque conseil, chaque création.',
+    values: [
+      {
+        title: 'Expertise Afro-Créole',
+        description:
+          'Formés aux spécificités de toutes les textures — du crépu au bouclé — nos stylistes maîtrisent les techniques adaptées à chaque type de cheveu.',
+      },
+      {
+        title: 'Écoute & Conseil',
+        description:
+          'Un diagnostic capillaire personnalisé avant chaque prestation pour comprendre vos envies et vous guider vers le résultat idéal.',
+      },
+      {
+        title: "Produits d'Exception",
+        description:
+          'Nous travaillons exclusivement avec des marques professionnelles reconnues, sélectionnées pour leur efficacité sur les cheveux texturés.',
+      },
+    ],
+  },
+
+  gallerySection: {
+    heading: 'Notre Galerie',
+    description:
+      "Découvrez nos réalisations en images. Chaque transformation est unique, chaque résultat est le fruit d'un savoir-faire artisanal et d'une écoute attentive.",
+  },
+
+  contactSection: {
+    heading: 'Contactez-nous',
+    description:
+      'Une question, un conseil personnalisé ou simplement envie de prendre rendez-vous ? Notre équipe est à votre écoute.',
+    formHeading: 'Envoyez-nous un message',
+    formDescription:
+      'Remplissez le formulaire ci-dessous et nous vous répondrons dans les 24 heures.',
+    mapEmbedUrl:
+      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3744.5!2d55.4512!3d-20.882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDUyJzU1LjIiUyA1NcKwMjcnMDQuMyJF!5e0!3m2!1sfr!2sre!4v1234567890',
+    accessInfo:
+      'Parking République à 2 minutes à pied. Accessible aux personnes à mobilité réduite. Arrêt de bus "Jean Chatel" à 50m.',
+  },
+
   footerLabels: {
     contactHeading: 'Contact',
     scheduleHeading: 'Horaires',
@@ -96,6 +148,7 @@ export const salonConfig: SalonConfig = {
     bookOnline: 'Réserver en ligne',
     legalNotice: 'Mentions Légales',
     termsAndConditions: 'CGV',
+    privacyPolicy: 'Confidentialité',
     byline: 'Créé avec passion à La Réunion',
   },
 
@@ -103,6 +156,16 @@ export const salonConfig: SalonConfig = {
     siteUrl: 'https://beautecreole.re',
     ogImageUrl: '/og-image.jpg',
     ogImageAlt: 'Beauté Créole — Salon de Coiffure Afro-Créole à La Réunion',
+  },
+
+  legal: {
+    ownerName: 'Marie-Laure DUPONT',
+    legalForm: 'Micro-entreprise',
+    siret: '123 456 789 00012',
+    hostName: 'Contabo GmbH',
+    hostAddress: 'Aschauer Straße 32a, 81549 Munich, Allemagne',
+    hostContact: 'https://contabo.com',
+    lastUpdated: '1er mars 2026',
   },
 };
 
@@ -411,26 +474,189 @@ export const teamMembers: TeamMember[] = [
   {
     id: 'marie-laure',
     name: 'Marie-Laure K.',
-    role: 'Coiffeuse Senior',
-    bio: 'Experte en colorations, balayage et soins sur cheveux texturés.',
-    imageUrl: 'https://picsum.photos/seed/stylist-ml/200/200',
-    specialities: ['Balayage', 'Couleur', 'Soins'],
+    role: 'Directrice Artistique & Coloriste',
+    bio: 'Fondatrice de Beauté Créole, Marie-Laure a perfectionné son art dans les plus grands salons parisiens avant de revenir à La Réunion. Experte en colorations et balayages sur cheveux texturés, elle crée des nuances uniques qui subliment chaque carnation.',
+    imageUrl: 'https://picsum.photos/seed/stylist-ml/600/600',
+    specialities: ['Balayage', 'Couleur', 'Direction artistique'],
+    yearsExperience: 12,
+    quote: 'La couleur doit révéler la lumière naturelle de chaque femme.',
+    instagram: 'https://instagram.com/marielaure.beautecreole',
   },
   {
     id: 'sandra',
     name: 'Sandra R.',
-    role: 'Technicienne Extensions',
-    bio: 'Spécialiste en extensions naturelles, nattage et tissage.',
-    imageUrl: 'https://picsum.photos/seed/stylist-sr/200/200',
-    specialities: ['Extensions', 'Nattage', 'Tissage'],
+    role: 'Spécialiste Extensions & Coiffures Protectrices',
+    bio: "Passionnée par l'art du tressage depuis son adolescence, Sandra maîtrise toutes les techniques de coiffures protectrices. Du nattage africain traditionnel aux extensions les plus sophistiquées, elle allie précision technique et créativité.",
+    imageUrl: 'https://picsum.photos/seed/stylist-sr/600/600',
+    specialities: ['Extensions', 'Nattage', 'Tissage', 'Box Braids'],
+    yearsExperience: 8,
+    quote: "Chaque tresse raconte une histoire, chaque coiffure est une œuvre d'art.",
   },
   {
     id: 'fabrice',
     name: 'Fabrice M.',
-    role: 'Expert Coupes & Lissage',
-    bio: 'Expert en coupes, soins et traitements lissants pour toutes textures.',
-    imageUrl: 'https://picsum.photos/seed/stylist-fm/200/200',
-    specialities: ['Coupes', 'Lissage', 'Soins'],
+    role: 'Expert Coupes & Traitements Capillaires',
+    bio: 'Formé aux techniques de coupe les plus pointues et certifié en lissage brésilien et japonais, Fabrice transforme les cheveux les plus récalcitrants. Son approche allie technicité et douceur pour des résultats spectaculaires et durables.',
+    imageUrl: 'https://picsum.photos/seed/stylist-fm/600/600',
+    specialities: ['Coupes', 'Lissage Brésilien', 'Lissage Japonais', 'Soins'],
+    yearsExperience: 10,
+    quote: "Un bon coiffeur écoute d'abord, coupe ensuite.",
+    instagram: 'https://instagram.com/fabrice.beautecreole',
+  },
+];
+
+/**
+ * Galerie de réalisations du salon.
+ * TODO (backend) : GET /api/gallery
+ */
+export const galleryItems: GalleryItem[] = [
+  /* ── Balayage & Couleur ─────────────────────────────────── */
+  {
+    id: 'gal-balayage-caramel',
+    imageUrl: 'https://picsum.photos/seed/gal-balayage-1/800/1000',
+    imageAlt: 'Balayage caramel sur cheveux bouclés',
+    category: 'balayage',
+    title: 'Balayage Caramel',
+    description: 'Nuances chaudes et lumineuses sur boucles naturelles.',
+    stylistId: 'marie-laure',
+  },
+  {
+    id: 'gal-balayage-miel',
+    imageUrl: 'https://picsum.photos/seed/gal-balayage-2/800/600',
+    imageAlt: 'Balayage miel doré sur cheveux longs',
+    category: 'balayage',
+    title: 'Balayage Miel Doré',
+    description: 'Éclaircissement progressif pour un effet soleil naturel.',
+    stylistId: 'marie-laure',
+  },
+  {
+    id: 'gal-couleur-cuivre',
+    imageUrl: 'https://picsum.photos/seed/gal-couleur-1/800/800',
+    imageAlt: 'Couleur cuivre intense sur cheveux texturés',
+    category: 'couleur',
+    title: 'Cuivre Intense',
+    description: 'Couleur complète vibrante et profonde.',
+    stylistId: 'marie-laure',
+  },
+  {
+    id: 'gal-couleur-bordeaux',
+    imageUrl: 'https://picsum.photos/seed/gal-couleur-2/800/1000',
+    imageAlt: 'Couleur bordeaux sur cheveux crépus',
+    category: 'couleur',
+    title: 'Bordeaux Profond',
+    description: 'Couleur riche et élégante, parfaite pour les carnations chaudes.',
+    stylistId: 'marie-laure',
+  },
+  /* ── Coupes ─────────────────────────────────────────────── */
+  {
+    id: 'gal-coupe-courte',
+    imageUrl: 'https://picsum.photos/seed/gal-coupe-1/800/800',
+    imageAlt: 'Coupe courte structurée sur cheveux afro',
+    category: 'coupe',
+    title: 'Coupe Courte Afro',
+    description: 'Coupe géométrique précise valorisant le volume naturel.',
+    stylistId: 'fabrice',
+  },
+  {
+    id: 'gal-coupe-degrade',
+    imageUrl: 'https://picsum.photos/seed/gal-coupe-2/800/600',
+    imageAlt: 'Dégradé homme avec trait de rasoir',
+    category: 'coupe',
+    title: 'Dégradé Sculptural',
+    description: 'Coupe homme avec finitions au rasoir, ligne parfaite.',
+    stylistId: 'fabrice',
+  },
+  {
+    id: 'gal-coupe-carre',
+    imageUrl: 'https://picsum.photos/seed/gal-coupe-3/800/1000',
+    imageAlt: 'Carré plongeant sur cheveux lisses',
+    category: 'coupe',
+    title: 'Carré Plongeant',
+    description: 'Lignes nettes et mouvement naturel.',
+    stylistId: 'fabrice',
+  },
+  /* ── Lissage ────────────────────────────────────────────── */
+  {
+    id: 'gal-lissage-bresilien',
+    imageUrl: 'https://picsum.photos/seed/gal-lissage-1/800/600',
+    imageAlt: 'Résultat lissage brésilien avant/après',
+    category: 'lissage',
+    title: 'Lissage Brésilien',
+    description: 'Transformation spectaculaire, cheveux souples et brillants pour 3 mois.',
+    stylistId: 'fabrice',
+  },
+  {
+    id: 'gal-lissage-japonais',
+    imageUrl: 'https://picsum.photos/seed/gal-lissage-2/800/1000',
+    imageAlt: 'Lissage japonais sur cheveux longs',
+    category: 'lissage',
+    title: 'Lissage Japonais',
+    description: 'Lissage permanent ultra-lisse, brillance miroir.',
+    stylistId: 'fabrice',
+  },
+  /* ── Extensions ─────────────────────────────────────────── */
+  {
+    id: 'gal-extensions-longues',
+    imageUrl: 'https://picsum.photos/seed/gal-ext-1/800/1000',
+    imageAlt: 'Extensions naturelles longueur XXL',
+    category: 'extensions',
+    title: 'Extensions XXL',
+    description: 'Pose invisible en cheveux naturels pour un volume maximal.',
+    stylistId: 'sandra',
+  },
+  {
+    id: 'gal-box-braids',
+    imageUrl: 'https://picsum.photos/seed/gal-ext-2/800/800',
+    imageAlt: 'Box braids longues avec fils dorés',
+    category: 'extensions',
+    title: 'Box Braids Dorées',
+    description: 'Tresses protectrices agrémentées de fils dorés.',
+    stylistId: 'sandra',
+  },
+  {
+    id: 'gal-cornrows',
+    imageUrl: 'https://picsum.photos/seed/gal-ext-3/800/600',
+    imageAlt: 'Cornrows géométriques',
+    category: 'extensions',
+    title: 'Cornrows Design',
+    description: "Motifs géométriques élaborés, un vrai travail d'artiste.",
+    stylistId: 'sandra',
+  },
+  /* ── Mariage ────────────────────────────────────────────── */
+  {
+    id: 'gal-mariage-chignon',
+    imageUrl: 'https://picsum.photos/seed/gal-mariage-1/800/1000',
+    imageAlt: 'Chignon de mariée avec fleurs naturelles',
+    category: 'mariage',
+    title: 'Chignon Mariée',
+    description: 'Chignon romantique orné de fleurs fraîches pour le plus beau jour.',
+    stylistId: 'marie-laure',
+  },
+  {
+    id: 'gal-mariage-tresse',
+    imageUrl: 'https://picsum.photos/seed/gal-mariage-2/800/800',
+    imageAlt: 'Coiffure de mariage tresse couronne',
+    category: 'mariage',
+    title: 'Tresse Couronne',
+    description: 'Coiffure bohème-chic parfaite pour une cérémonie en plein air.',
+    stylistId: 'sandra',
+  },
+  /* ── Soins ──────────────────────────────────────────────── */
+  {
+    id: 'gal-soin-keratine',
+    imageUrl: 'https://picsum.photos/seed/gal-soin-1/800/600',
+    imageAlt: 'Avant/après soin kératine profond',
+    category: 'soin',
+    title: 'Kératine Profond',
+    description: 'Cheveux revitalisés, brillance et souplesse retrouvées.',
+  },
+  {
+    id: 'gal-soin-hydratation',
+    imageUrl: 'https://picsum.photos/seed/gal-soin-2/800/800',
+    imageAlt: 'Résultat soin hydratation intense',
+    category: 'soin',
+    title: 'Hydratation Intense',
+    description: 'Boucles définies et nourries en profondeur.',
   },
 ];
 

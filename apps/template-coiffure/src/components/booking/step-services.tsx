@@ -59,10 +59,10 @@ function ServiceRow({ service, selected, wouldExceedLimit, onToggle }: ServiceRo
         className={cn(
           'group w-full rounded-xl border p-4 text-left transition-all duration-150',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-          selected && 'border-primary bg-primary/5 shadow-sm',
+          selected && 'cursor-pointer border-primary bg-primary/5 shadow-sm',
           !selected &&
             !isDisabled &&
-            'border-border bg-surface hover:border-primary/40 hover:bg-primary/2',
+            'cursor-pointer border-border bg-surface hover:border-primary/40 hover:bg-primary/2',
           isDisabled && 'cursor-not-allowed border-border bg-surface opacity-45',
         )}
       >
@@ -128,7 +128,7 @@ function ProductRow({ product, selected, onToggle }: ProductRowProps) {
         aria-checked={selected}
         onClick={onToggle}
         className={cn(
-          'group w-full rounded-xl border p-3.5 text-left transition-all duration-150',
+          'group w-full rounded-xl border p-3.5 text-left transition-all duration-150 cursor-pointer',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary',
           selected
             ? 'border-secondary bg-secondary/5 shadow-sm'
@@ -269,7 +269,7 @@ export function StepServices({ state, dispatch, services, products }: StepServic
           aria-expanded={productsOpen}
           aria-controls="products-panel"
           onClick={() => setProductsOpen((v) => !v)}
-          className="flex w-full items-center justify-between bg-surface px-5 py-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex w-full cursor-pointer items-center justify-between bg-surface px-5 py-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <div className="flex items-center gap-2">
             <ShoppingBag size={16} className="text-secondary" aria-hidden="true" />

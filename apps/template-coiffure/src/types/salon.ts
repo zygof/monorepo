@@ -66,7 +66,55 @@ export interface TeamMember {
   bio: string;
   imageUrl: string;
   specialities: string[];
+  /** Nombre d'années d'expérience */
+  yearsExperience?: number;
+  /** Citation / philosophie personnelle */
+  quote?: string;
   instagram?: string;
+}
+
+/** Contenu de la section Équipe — configurable par client */
+export interface TeamSectionContent {
+  heading: string;
+  description: string;
+  valuesHeading: string;
+  valuesDescription: string;
+  values: TeamValue[];
+}
+
+export interface TeamValue {
+  title: string;
+  description: string;
+}
+
+/* ── Gallery Types ───────────────────────────────────────────────────── */
+
+export type GalleryCategory =
+  | 'balayage'
+  | 'coupe'
+  | 'lissage'
+  | 'extensions'
+  | 'mariage'
+  | 'couleur'
+  | 'soin';
+
+export interface GalleryItem {
+  id: string;
+  imageUrl: string;
+  imageAlt: string;
+  category: GalleryCategory;
+  /** Titre court affiché en overlay */
+  title: string;
+  /** Description optionnelle */
+  description?: string;
+  /** Styliste qui a réalisé la prestation */
+  stylistId?: string;
+}
+
+/** Contenu de la section Galerie — configurable par client */
+export interface GallerySectionContent {
+  heading: string;
+  description: string;
 }
 
 export interface Schedule {
@@ -135,6 +183,18 @@ export interface CtaBannerContent {
   buttonLabel: string;
 }
 
+/** Contenu de la page Contact — configurable par client */
+export interface ContactSectionContent {
+  heading: string;
+  description: string;
+  formHeading: string;
+  formDescription: string;
+  /** URL Google Maps embed (iframe src) */
+  mapEmbedUrl: string;
+  /** Texte affiché sous la carte */
+  accessInfo: string;
+}
+
 /** Labels du footer — configurables pour localisation et client */
 export interface FooterLabels {
   contactHeading: string;
@@ -143,8 +203,29 @@ export interface FooterLabels {
   bookOnline: string;
   legalNotice: string;
   termsAndConditions: string;
+  privacyPolicy: string;
   /** Ligne de crédits en bas à droite */
   byline: string;
+}
+
+/** Informations légales du professionnel — nécessaires pour les pages juridiques */
+export interface LegalConfig {
+  /** Nom complet du gérant / responsable */
+  ownerName: string;
+  /** Forme juridique (ex: Micro-entreprise, SAS, SARL) */
+  legalForm: string;
+  /** Numéro SIRET */
+  siret: string;
+  /** Numéro de TVA intracommunautaire (si applicable) */
+  tvaNumber?: string;
+  /** Nom de l'hébergeur web */
+  hostName: string;
+  /** Adresse de l'hébergeur */
+  hostAddress: string;
+  /** URL ou contact de l'hébergeur */
+  hostContact: string;
+  /** Date de dernière mise à jour des CGV/mentions légales (format: "1er mars 2026") */
+  lastUpdated: string;
 }
 
 /** Configuration SEO — URLs et données Open Graph */
@@ -155,6 +236,69 @@ export interface SeoConfig {
   ogImageUrl: string;
   ogImageAlt: string;
 }
+
+/* ── Account Types ────────────────────────────────────────────────────── */
+
+export interface UserProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string;
+  /** Date d'inscription (ISO) */
+  memberSince: string;
+}
+
+export type AppointmentStatus = 'confirmed' | 'pending' | 'cancelled' | 'completed';
+
+export interface Appointment {
+  id: string;
+  /** Nom(s) de la prestation */
+  services: string[];
+  /** Date du rendez-vous (ISO) */
+  date: string;
+  /** Heure (HH:MM) */
+  time: string;
+  /** Durée en minutes */
+  durationMin: number;
+  /** Prix total en euros */
+  price: number;
+  status: AppointmentStatus;
+  /** ID du styliste */
+  stylistId: string;
+  /** Avis laissé par le client (optionnel) */
+  review?: AppointmentReview;
+}
+
+export interface AppointmentReview {
+  rating: number;
+  comment: string;
+  /** Date de l'avis (ISO) */
+  createdAt: string;
+}
+
+export interface LoyaltyInfo {
+  /** Nombre de visites effectuées */
+  currentVisits: number;
+  /** Nombre de visites nécessaires pour la récompense */
+  targetVisits: number;
+  /** Description de la récompense */
+  reward: string;
+  /** Réduction obtenue */
+  discount: string;
+}
+
+export interface PromoOffer {
+  /** Badge (ex: "OFFRE DU MOIS") */
+  badge: string;
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+export type AccountTab = 'appointments' | 'profile' | 'loyalty';
 
 /* ── Booking Types ────────────────────────────────────────────────────── */
 
@@ -213,6 +357,10 @@ export interface SalonConfig {
   hero: HeroContent;
   servicesSection: ServicesSectionContent;
   ctaBanner: CtaBannerContent;
+  teamSection: TeamSectionContent;
+  gallerySection: GallerySectionContent;
+  contactSection: ContactSectionContent;
   footerLabels: FooterLabels;
   seo: SeoConfig;
+  legal: LegalConfig;
 }

@@ -190,7 +190,7 @@ function StylistCard({ member, selected, onSelect }: StylistCardProps) {
         aria-checked={selected}
         onClick={onSelect}
         className={cn(
-          'group relative w-full rounded-xl border p-3.5 text-left transition-all duration-150',
+          'group relative w-full rounded-xl border p-3.5 text-left transition-all duration-150 cursor-pointer',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
           selected
             ? 'border-primary bg-primary/5 shadow-sm'
@@ -304,7 +304,7 @@ export function StepDatetime({ state, dispatch, teamMembers }: StepDatetimeProps
               aria-checked={state.stylistId === 'any'}
               onClick={() => dispatch({ type: 'SET_STYLIST', id: 'any' })}
               className={cn(
-                'w-full rounded-xl border p-3.5 text-left transition-all duration-150',
+                'w-full rounded-xl border p-3.5 text-left transition-all duration-150 cursor-pointer',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
                 state.stylistId === 'any'
                   ? 'border-primary bg-primary/5 shadow-sm'
@@ -364,7 +364,7 @@ export function StepDatetime({ state, dispatch, teamMembers }: StepDatetimeProps
               className={cn(
                 'rounded-lg p-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
                 canGoPrevMonth
-                  ? 'hover:bg-primary-light text-text'
+                  ? 'cursor-pointer hover:bg-primary-light text-text'
                   : 'text-border cursor-not-allowed',
               )}
             >
@@ -377,7 +377,7 @@ export function StepDatetime({ state, dispatch, teamMembers }: StepDatetimeProps
               type="button"
               onClick={nextMonth}
               aria-label="Mois suivant"
-              className="rounded-lg p-1.5 text-text transition-colors hover:bg-primary-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="rounded-lg p-1.5 cursor-pointer text-text transition-colors hover:bg-primary-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <ChevronRight size={18} aria-hidden="true" />
             </button>
@@ -414,9 +414,15 @@ export function StepDatetime({ state, dispatch, teamMembers }: StepDatetimeProps
                   className={cn(
                     'relative rounded-lg py-2 text-sm font-medium transition-colors',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-                    isSelected && 'bg-primary text-white',
-                    !isSelected && isToday && !isDisabled && 'border border-primary text-primary',
-                    !isSelected && !isDisabled && !isToday && 'hover:bg-primary-light text-text',
+                    isSelected && 'cursor-pointer bg-primary text-white',
+                    !isSelected &&
+                      isToday &&
+                      !isDisabled &&
+                      'cursor-pointer border border-primary text-primary',
+                    !isSelected &&
+                      !isDisabled &&
+                      !isToday &&
+                      'cursor-pointer hover:bg-primary-light text-text',
                     isDisabled && 'text-border cursor-not-allowed',
                   )}
                 >
@@ -463,10 +469,10 @@ export function StepDatetime({ state, dispatch, teamMembers }: StepDatetimeProps
                   className={cn(
                     'rounded-xl border py-2.5 text-sm font-medium transition-colors',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-                    isSelected && 'border-primary bg-primary text-white',
+                    isSelected && 'cursor-pointer border-primary bg-primary text-white',
                     !isSelected &&
                       !isDisabled &&
-                      'border-border bg-surface text-text hover:border-primary hover:text-primary',
+                      'cursor-pointer border-border bg-surface text-text hover:border-primary hover:text-primary',
                     passed &&
                       'border-border bg-surface text-border line-through opacity-35 cursor-not-allowed',
                     !available &&

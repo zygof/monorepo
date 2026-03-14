@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button, cn } from '@marrynov/ui';
 import type { BookingState, BookingAction, Service, Product } from '@/types/salon';
 import { allServices, beautyProducts, teamMembers } from '@/config/salon.config';
+import { bookingContactSchema } from '@/lib/validation';
 import { BookingStepper } from './booking-stepper';
 import { BookingSummary } from './booking-summary';
 import { StepServices } from './step-services';
@@ -117,10 +118,8 @@ export function BookingWizard({
     if (state.step === 1) return state.selectedServices.length === 0;
     if (state.step === 2) return !state.date || !state.timeSlot;
     if (state.step === 3) {
-      const { firstName, lastName, email, phone: tel, acceptCgv } = state.contact;
-      return (
-        !firstName.trim() || !lastName.trim() || !email.includes('@') || !tel.trim() || !acceptCgv
-      );
+      const result = bookingContactSchema.safeParse(state.contact);
+      return !result.success;
     }
     return true;
   })();

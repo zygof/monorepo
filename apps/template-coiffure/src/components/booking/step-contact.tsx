@@ -1,20 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Bell, BellOff, LogIn } from 'lucide-react';
 import { cn } from '@marrynov/ui';
 import type { BookingState, BookingAction, BookingContact } from '@/types/salon';
+import { bookingContactSchema, type BookingContactInput } from '@/lib/validation';
 import { AuthModal } from '@/components/auth/auth-modal';
+
+/* ── Shared styles ───────────────────────────────────────────────────── */
+
+const INPUT_CLASS =
+  'w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-text placeholder:text-text-muted ' +
+  'transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ' +
+  'disabled:opacity-50';
+
+const ERROR_CLS = 'mt-1 text-xs text-error';
+
+/* ── Field wrapper ───────────────────────────────────────────────────── */
 
 interface FieldProps {
   id: string;
   label: string;
   required?: boolean;
   error?: string;
+  hint?: string;
   children: React.ReactNode;
 }
 
-function Field({ id, label, required, error, children }: FieldProps) {
+function Field({ id, label, required, error, hint, children }: FieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium text-text">
@@ -25,10 +40,11 @@ function Field({ id, label, required, error, children }: FieldProps) {
             *
           </span>
         )}
+        {hint && <span className="ml-1 text-xs font-normal text-text-muted">({hint})</span>}
       </label>
       {children}
       {error && (
-        <p id={`${id}-error`} role="alert" className="text-xs text-error">
+        <p id={`${id}-error`} role="alert" className={ERROR_CLS}>
           {error}
         </p>
       )}
@@ -36,27 +52,56 @@ function Field({ id, label, required, error, children }: FieldProps) {
   );
 }
 
-const INPUT_CLASS =
-  'w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-text placeholder:text-text-muted ' +
-  'transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ' +
-  'disabled:opacity-50 aria-invalid:border-error aria-invalid:ring-error/20';
+/* ── Props ────────────────────────────────────────────────────────────── */
 
 interface StepContactProps {
   state: BookingState;
   dispatch: React.Dispatch<BookingAction>;
 }
 
-type ContactTextField = Extract<
-  keyof BookingContact,
-  'firstName' | 'lastName' | 'email' | 'phone' | 'notes'
->;
-
 export function StepContact({ state, dispatch }: StepContactProps) {
   const { contact } = state;
   const [authOpen, setAuthOpen] = useState(false);
 
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    trigger,
+    watch,
+  } = useForm<BookingContactInput>({
+    resolver: zodResolver(bookingContactSchema),
+    mode: 'onBlur',
+    defaultValues: {
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      email: contact.email,
+      phone: contact.phone,
+      notes: contact.notes,
+      smsNotif: contact.smsNotif,
+      acceptCgv: contact.acceptCgv as true,
+    },
+  });
+
+  // Sync react-hook-form → reducer on every change
+  useEffect(() => {
+    const subscription = watch((values) => {
+      const fields: (keyof BookingContact)[] = ['firstName', 'lastName', 'email', 'phone', 'notes'];
+      for (const field of fields) {
+        const val = values[field];
+        if (typeof val === 'string' && val !== contact[field]) {
+          dispatch({ type: 'SET_CONTACT_FIELD', field, value: val });
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, dispatch, contact]);
+
   function set(field: keyof BookingContact, value: string | boolean) {
     dispatch({ type: 'SET_CONTACT_FIELD', field, value });
+    if (field === 'smsNotif' || field === 'acceptCgv') {
+      setValue(field as 'smsNotif' | 'acceptCgv', value as boolean);
+    }
   }
 
   function handleAuthSuccess({
@@ -68,62 +113,21 @@ export function StepContact({ state, dispatch }: StepContactProps) {
     firstName: string;
     lastName: string;
   }) {
-    // TODO (auth) : récupérer le profil complet depuis la session next-auth
-    if (email) set('email', email);
-    if (firstName) set('firstName', firstName);
-    if (lastName) set('lastName', lastName);
+    if (email) {
+      setValue('email', email);
+      dispatch({ type: 'SET_CONTACT_FIELD', field: 'email', value: email });
+    }
+    if (firstName) {
+      setValue('firstName', firstName);
+      dispatch({ type: 'SET_CONTACT_FIELD', field: 'firstName', value: firstName });
+    }
+    if (lastName) {
+      setValue('lastName', lastName);
+      dispatch({ type: 'SET_CONTACT_FIELD', field: 'lastName', value: lastName });
+    }
+    // Trigger validation after pre-fill
+    void trigger();
   }
-
-  const emailInvalid = contact.email !== '' && !contact.email.includes('@');
-  const phoneInvalid = contact.phone !== '' && contact.phone.replace(/\D/g, '').length < 8;
-
-  const fields: Array<{
-    id: ContactTextField;
-    label: string;
-    type: string;
-    placeholder: string;
-    autoComplete: string;
-    required: boolean;
-    error?: string;
-    className?: string;
-  }> = [
-    {
-      id: 'firstName',
-      label: 'Prénom',
-      type: 'text',
-      placeholder: 'Marie',
-      autoComplete: 'given-name',
-      required: true,
-    },
-    {
-      id: 'lastName',
-      label: 'Nom',
-      type: 'text',
-      placeholder: 'Dupont',
-      autoComplete: 'family-name',
-      required: true,
-    },
-    {
-      id: 'email',
-      label: 'Email',
-      type: 'email',
-      placeholder: 'marie@exemple.re',
-      autoComplete: 'email',
-      required: true,
-      error: emailInvalid ? 'Adresse email invalide' : undefined,
-      className: 'sm:col-span-2',
-    },
-    {
-      id: 'phone',
-      label: 'Téléphone',
-      type: 'tel',
-      placeholder: '0692 XX XX XX',
-      autoComplete: 'tel',
-      required: true,
-      error: phoneInvalid ? 'Numéro de téléphone invalide' : undefined,
-      className: 'sm:col-span-2',
-    },
-  ];
 
   return (
     <section aria-labelledby="step-contact-heading">
@@ -144,7 +148,7 @@ export function StepContact({ state, dispatch }: StepContactProps) {
         <button
           type="button"
           onClick={() => setAuthOpen(true)}
-          className="text-sm font-medium text-primary hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="cursor-pointer text-sm font-medium text-primary hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Se connecter →
         </button>
@@ -159,39 +163,85 @@ export function StepContact({ state, dispatch }: StepContactProps) {
 
       <form noValidate onSubmit={(e) => e.preventDefault()}>
         <div className="grid gap-5 sm:grid-cols-2">
-          {fields.map((f) => (
-            <div key={f.id} className={f.className}>
-              <Field id={f.id} label={f.label} required={f.required} error={f.error}>
-                <input
-                  id={f.id}
-                  type={f.type}
-                  value={contact[f.id]}
-                  onChange={(e) => set(f.id, e.target.value)}
-                  placeholder={f.placeholder}
-                  autoComplete={f.autoComplete}
-                  required={f.required}
-                  aria-invalid={!!f.error}
-                  aria-describedby={f.error ? `${f.id}-error` : undefined}
-                  className={cn(INPUT_CLASS, f.error && 'border-error')}
-                />
-              </Field>
-            </div>
-          ))}
+          {/* Prénom */}
+          <Field id="firstName" label="Prénom" required error={errors.firstName?.message}>
+            <input
+              id="firstName"
+              type="text"
+              placeholder="Marie"
+              autoComplete="given-name"
+              aria-invalid={!!errors.firstName}
+              aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+              className={cn(INPUT_CLASS, errors.firstName && 'border-error ring-error/20')}
+              {...register('firstName')}
+            />
+          </Field>
 
-          {/* Notes */}
+          {/* Nom */}
+          <Field id="lastName" label="Nom" required error={errors.lastName?.message}>
+            <input
+              id="lastName"
+              type="text"
+              placeholder="Dupont"
+              autoComplete="family-name"
+              aria-invalid={!!errors.lastName}
+              aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+              className={cn(INPUT_CLASS, errors.lastName && 'border-error ring-error/20')}
+              {...register('lastName')}
+            />
+          </Field>
+
+          {/* Email */}
           <div className="sm:col-span-2">
-            <Field id="notes" label="Message ou demande particulière" required={false}>
-              <textarea
-                id="notes"
-                value={contact.notes}
-                onChange={(e) => set('notes', e.target.value)}
-                placeholder="Allergies, longueur souhaitée, occasion spéciale…"
-                rows={3}
-                autoComplete="off"
-                className={cn(INPUT_CLASS, 'resize-none')}
+            <Field id="email" label="Email" required error={errors.email?.message}>
+              <input
+                id="email"
+                type="email"
+                placeholder="marie@exemple.re"
+                autoComplete="email"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                className={cn(INPUT_CLASS, errors.email && 'border-error ring-error/20')}
+                {...register('email')}
               />
             </Field>
           </div>
+
+          {/* Téléphone */}
+          <div className="sm:col-span-2">
+            <Field
+              id="phone"
+              label="Téléphone"
+              required
+              error={errors.phone?.message}
+              hint="ex: 0692 12 34 56"
+            >
+              <input
+                id="phone"
+                type="tel"
+                placeholder="0692 12 34 56"
+                autoComplete="tel"
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? 'phone-error' : undefined}
+                className={cn(INPUT_CLASS, errors.phone && 'border-error ring-error/20')}
+                {...register('phone')}
+              />
+            </Field>
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="mt-5">
+          <Field id="notes" label="Message ou demande particulière" error={errors.notes?.message}>
+            <textarea
+              id="notes"
+              placeholder="Allergies, longueur souhaitée, occasion spéciale…"
+              rows={3}
+              autoComplete="off"
+              className={cn(INPUT_CLASS, 'resize-none')}
+              {...register('notes')}
+            />
+          </Field>
         </div>
 
         {/* SMS notification toggle */}
@@ -215,7 +265,7 @@ export function StepContact({ state, dispatch }: StepContactProps) {
             aria-checked={contact.smsNotif}
             onClick={() => set('smsNotif', !contact.smsNotif)}
             className={cn(
-              'inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200',
+              'inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200',
               'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
               contact.smsNotif ? 'bg-primary' : 'bg-border',
             )}
@@ -238,6 +288,7 @@ export function StepContact({ state, dispatch }: StepContactProps) {
               className={cn(
                 'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors',
                 contact.acceptCgv ? 'border-primary bg-primary' : 'border-border bg-white',
+                errors.acceptCgv && !contact.acceptCgv && 'border-error',
               )}
               aria-hidden="true"
             >
@@ -283,6 +334,11 @@ export function StepContact({ state, dispatch }: StepContactProps) {
               </span>
             </span>
           </label>
+          {errors.acceptCgv && !contact.acceptCgv && (
+            <p role="alert" className="mt-1 text-xs text-error">
+              {errors.acceptCgv.message}
+            </p>
+          )}
         </div>
 
         <p className="mt-3 text-xs text-text-muted">

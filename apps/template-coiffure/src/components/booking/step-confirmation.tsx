@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button, cn } from '@marrynov/ui';
 import type { BookingState, TeamMember } from '@/types/salon';
+import { registerEmailSchema } from '@/lib/validation';
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -145,6 +146,7 @@ export function StepConfirmation({
 }: StepConfirmationProps) {
   const { selectedServices, selectedProducts, stylistId, date, timeSlot, contact } = state;
   const [registerEmail, setRegisterEmail] = useState(contact.email);
+  const [registerError, setRegisterError] = useState('');
 
   const stylist = stylistId !== 'any' ? teamMembers.find((m) => m.id === stylistId) : null;
   const servicesLabel = selectedServices.map((s) => s.name).join(' + ');
@@ -321,26 +323,47 @@ export function StepConfirmation({
             </p>
           </div>
           <form
-            action="/inscription"
-            method="get"
             className="flex shrink-0 flex-col gap-2 sm:flex-row"
-            onSubmit={(e) => e.preventDefault()}
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              const result = registerEmailSchema.safeParse({ email: registerEmail });
+              if (!result.success) {
+                setRegisterError(result.error.issues[0]?.message ?? 'Email invalide');
+                return;
+              }
+              setRegisterError('');
+              // TODO (auth) : POST /api/auth/register { email: result.data.email }
+              // L'email est déjà normalisé (trim + lowercase) par zod
+            }}
           >
-            <label htmlFor="register-email" className="sr-only">
-              Votre adresse email
-            </label>
-            <input
-              id="register-email"
-              type="email"
-              name="email"
-              value={registerEmail}
-              onChange={(e) => setRegisterEmail(e.target.value)}
-              placeholder="client@email.com"
-              className={cn(
-                'w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-text',
-                'placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary',
+            <div className="flex flex-col gap-1">
+              <label htmlFor="register-email" className="sr-only">
+                Votre adresse email
+              </label>
+              <input
+                id="register-email"
+                type="email"
+                name="email"
+                value={registerEmail}
+                onChange={(e) => {
+                  setRegisterEmail(e.target.value);
+                  if (registerError) setRegisterError('');
+                }}
+                placeholder="marie@exemple.re"
+                aria-invalid={!!registerError}
+                className={cn(
+                  'w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-text',
+                  'placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary',
+                  registerError && 'border-error focus:ring-error/20',
+                )}
+              />
+              {registerError && (
+                <p role="alert" className="text-xs text-error">
+                  {registerError}
+                </p>
               )}
-            />
+            </div>
             <Button type="submit" variant="default" size="pill-sm" className="whitespace-nowrap">
               Créer mon compte
             </Button>

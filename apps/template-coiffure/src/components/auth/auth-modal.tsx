@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { signIn } from 'next-auth/react';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import {
   Button,
@@ -16,35 +16,20 @@ import {
   cn,
 } from '@marrynov/ui';
 
-/* ── Zod schemas ─────────────────────────────────────────────────────── */
+/* ── Zod schemas (partagés depuis lib/validation) ────────────────────── */
 
-const loginSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
-  password: z.string().min(6, 'Minimum 6 caractères'),
-});
-
-const signupSchema = z.object({
-  firstName: z.string().trim().min(1, 'Requis').max(50, 'Trop long'),
-  lastName: z.string().trim().min(1, 'Requis').max(50, 'Trop long'),
-  email: z.string().email('Adresse email invalide'),
-  password: z
-    .string()
-    .min(8, 'Minimum 8 caractères')
-    .regex(/[A-Z]/, 'Au moins une majuscule')
-    .regex(/[0-9]/, 'Au moins un chiffre'),
-});
-
-const forgotSchema = z.object({
-  email: z.string().email('Adresse email invalide'),
-});
-
-type LoginFields = z.infer<typeof loginSchema>;
-type SignupFields = z.infer<typeof signupSchema>;
-type ForgotFields = z.infer<typeof forgotSchema>;
+import {
+  loginSchema,
+  signupSchema,
+  forgotSchema,
+  type LoginFields,
+  type SignupFields,
+  type ForgotFields,
+} from '@/lib/validation';
 
 /* ── Types ───────────────────────────────────────────────────────────── */
 
-type AuthView = 'login' | 'signup' | 'forgot' | 'forgot-sent';
+export type AuthView = 'login' | 'signup' | 'forgot' | 'forgot-sent';
 
 export interface AuthSuccessUser {
   email: string;
@@ -210,10 +195,18 @@ function LoginView({
 
   async function onSubmit(data: LoginFields) {
     setGlobalError('');
-    // TODO (auth) : signIn('credentials', { email: data.email, password: data.password, redirect: false })
-    // Gérer les erreurs : CredentialsSignin → 'Email ou mot de passe incorrect'
-    await new Promise((r) => setTimeout(r, 800)); // simulation
-    onSuccess({ email: data.email, firstName: 'Utilisateur', lastName: '' });
+    const res = await signIn('credentials', {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+
+    if (res?.error) {
+      setGlobalError('Email ou mot de passe incorrect');
+      return;
+    }
+
+    onSuccess({ email: data.email, firstName: '', lastName: '' });
   }
 
   return (
@@ -225,13 +218,12 @@ function LoginView({
         </DialogDescription>
       </DialogHeader>
 
-      <GoogleButton
-        onClick={() => {
-          /* TODO (auth) : signIn('google') */
-        }}
-      />
-
-      <OAuthSeparator />
+      {process.env.NEXT_PUBLIC_GOOGLE_ENABLED === 'true' && (
+        <>
+          <GoogleButton onClick={() => signIn('google', { callbackUrl: '/' })} />
+          <OAuthSeparator />
+        </>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         {globalError && (
@@ -334,10 +326,32 @@ function SignupView({
 
   async function onSubmit(data: SignupFields) {
     setGlobalError('');
-    // TODO (auth) : POST /api/auth/register { firstName, lastName, email, password }
-    // puis signIn('credentials', { email, password, redirect: false })
-    // Payload prêt : { ...data } — toutes les valeurs sont validées et trimmées par zod
-    await new Promise((r) => setTimeout(r, 800)); // simulation
+
+    // 1. Créer le compte via l'API
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      setGlobalError(body?.error ?? 'Une erreur est survenue');
+      return;
+    }
+
+    // 2. Connecter automatiquement après inscription
+    const signInRes = await signIn('credentials', {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+
+    if (signInRes?.error) {
+      setGlobalError('Compte créé mais connexion échouée. Essayez de vous connecter.');
+      return;
+    }
+
     onSuccess({ email: data.email, firstName: data.firstName, lastName: data.lastName });
   }
 
@@ -352,13 +366,12 @@ function SignupView({
         </DialogDescription>
       </DialogHeader>
 
-      <GoogleButton
-        onClick={() => {
-          /* TODO (auth) : signIn('google') */
-        }}
-      />
-
-      <OAuthSeparator />
+      {process.env.NEXT_PUBLIC_GOOGLE_ENABLED === 'true' && (
+        <>
+          <GoogleButton onClick={() => signIn('google', { callbackUrl: '/' })} />
+          <OAuthSeparator />
+        </>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
         {globalError && (
@@ -489,10 +502,13 @@ function ForgotView({ onBack, onSent }: { onBack: () => void; onSent: () => void
     mode: 'onBlur',
   });
 
-  async function onSubmit(_data: ForgotFields) {
-    // TODO (auth) : POST /api/auth/forgot-password { email: data.email }
-    // Répondre 200 même si l'email n'existe pas (sécurité anti-enumération)
-    await new Promise((r) => setTimeout(r, 700)); // simulation
+  async function onSubmit(data: ForgotFields) {
+    await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: data.email }),
+    });
+    // Toujours afficher "envoyé" (sécurité anti-énumération)
     onSent();
   }
 
