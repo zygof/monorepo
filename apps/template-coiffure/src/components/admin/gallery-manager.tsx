@@ -17,7 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
   cn,
+  toast,
 } from '@marrynov/ui';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 interface GalleryItem {
   id: string;
@@ -118,12 +120,14 @@ export function GalleryManager({ initialItems }: { initialItems: GalleryItem[] }
     if (!res.ok) {
       const data = await res.json().catch(() => null);
       setError(data?.error ?? 'Erreur lors de la sauvegarde');
+      toast.error('Erreur', { description: data?.error ?? 'Impossible de sauvegarder' });
       setSaving(false);
       return;
     }
 
     setSaving(false);
     setDialogOpen(false);
+    toast.success(editingItem ? 'Photo modifiée' : 'Photo ajoutée à la galerie');
     router.refresh();
   }
 
@@ -132,6 +136,7 @@ export function GalleryManager({ initialItems }: { initialItems: GalleryItem[] }
     await fetch(`/api/admin/gallery/${deletingItem.id}`, { method: 'DELETE' });
     setDeleteOpen(false);
     setDeletingItem(null);
+    toast.success('Photo supprimée');
     router.refresh();
   }
 
@@ -260,7 +265,7 @@ export function GalleryManager({ initialItems }: { initialItems: GalleryItem[] }
             <DialogDescription className="text-sm text-text-muted">
               {editingItem
                 ? 'Modifiez les informations.'
-                : 'Ajoutez une photo à la galerie via URL.'}
+                : 'Uploadez une photo et renseignez les détails.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -272,25 +277,16 @@ export function GalleryManager({ initialItems }: { initialItems: GalleryItem[] }
             )}
 
             <div>
-              <label className="text-sm font-medium text-text">URL de l&apos;image *</label>
-              <Input
+              <label className="text-sm font-medium text-text mb-2 block">Image *</label>
+              <ImageUpload
                 value={form.imageUrl}
-                onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                placeholder="https://images.unsplash.com/…"
-                className="mt-1 rounded-xl"
+                endpoint="galleryUpload"
+                shape="square"
+                size={200}
+                hint="JPG ou PNG, max 4 Mo"
+                onChange={(url) => setForm((f) => ({ ...f, imageUrl: url }))}
+                onRemove={() => setForm((f) => ({ ...f, imageUrl: '' }))}
               />
-              {form.imageUrl && (
-                <div className="mt-2 aspect-video max-h-40 overflow-hidden rounded-xl bg-background">
-                  <img
-                    src={form.imageUrl}
-                    alt="Aperçu"
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
