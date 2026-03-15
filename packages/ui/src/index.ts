@@ -36,6 +36,7 @@ export {
   SelectValue,
 } from './components/select';
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './components/tabs';
+export { Toaster, toast } from './components/toaster';
 
 // Utils
 export { cn } from './lib/utils';
