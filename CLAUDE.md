@@ -44,7 +44,7 @@
 - `n8n.marrynov.re` → Automatisation n8n (SQLite)
 - `uptime.marrynov.re` → Monitoring Uptime Kuma 2.2.1
 - `marrynov.re` → Site vitrine (déploiement à venir)
-- `[template]-[tier].marrynov.re` → Démos commerciales (ex: coiffure-expert.marrynov.re)
+- `[template]-[tier].marrynov.re` → Démos commerciales (ex: coiffure-standard.marrynov.re)
 
 ## Services Dokploy (projet : infrastructure)
 
@@ -125,19 +125,19 @@ Chaque template (coiffure, pizza, restaurant, location-voiture, boutique) propos
 Le tier est déterminé par une **unique variable d'env** : `NEXT_PUBLIC_OFFER_TIER`.
 
 ```
-NEXT_PUBLIC_OFFER_TIER=standard|expert|premium
+NEXT_PUBLIC_OFFER_TIER=vitrine|standard|premium
 ```
 
-### Standard — Présence digitale
+### Vitrine — Présence digitale
 
 - Site vitrine : accueil, services, galerie, équipe, contact, pages légales
 - Pas de réservation en ligne, pas d'auth, pas d'admin/staff
 - CTAs redirigent vers `/contact` ou le téléphone
 - Middleware bloque `/reserver`, `/compte`, `/admin`, `/staff` et APIs associées
 
-### Expert — Réservation & Gestion
+### Standard — Réservation & Gestion
 
-- Tout Standard +
+- Tout Vitrine +
 - Réservation en ligne (booking wizard, calendrier, créneaux)
 - Authentification (comptes clients, login/signup, Google OAuth)
 - Admin back-office (services, RDV, galerie, équipe, horaires, avis, produits)
@@ -146,7 +146,7 @@ NEXT_PUBLIC_OFFER_TIER=standard|expert|premium
 
 ### Premium — Paiement en ligne
 
-- Tout Expert +
+- Tout Standard +
 - Acompte Stripe à la réservation (configurable via `NEXT_PUBLIC_DEPOSIT_PERCENTAGE`, défaut 30%)
 - Minimum d'acompte configurable via `NEXT_PUBLIC_DEPOSIT_MIN_EUROS` (défaut 5€)
 - Step 4 dans le booking wizard avec Stripe PaymentElement
@@ -160,16 +160,16 @@ NEXT_PUBLIC_OFFER_TIER=standard|expert|premium
 ### Sous-domaines démos
 
 ```
+coiffure-vitrine.marrynov.re
 coiffure-standard.marrynov.re
-coiffure-expert.marrynov.re
 coiffure-premium.marrynov.re
 ```
 
 ### Fichier clé : `src/lib/offers.ts`
 
-- `getOfferTier()` → lit `NEXT_PUBLIC_OFFER_TIER`, fallback 'expert'
+- `getOfferTier()` → lit `NEXT_PUBLIC_OFFER_TIER`, fallback 'standard'
 - `hasBooking()`, `hasAuth()`, `hasAdmin()`, `hasStaff()`, `hasLoyalty()`, `hasPayment()`
-- `getPrimaryCta()` → `/reserver` (Expert+) ou `/contact` (Standard)
+- `getPrimaryCta()` → `/reserver` (Standard+) ou `/contact` (Vitrine)
 - `calculateDeposit(totalCents)` → montant acompte (Premium)
 - `getDepositPercentage()` → % acompte depuis env (défaut 30)
 - `getDepositMinCents()` → minimum acompte en centimes depuis env (défaut 500)
@@ -186,7 +186,7 @@ Changer `NEXT_PUBLIC_OFFER_TIER` dans le `.env` → redeploy. C'est tout.
 - Staging : `[prenom].marrynov.re`
 - Prod : `[domaine-client.re]`
 - Config client : `config/client.config.ts` (SEUL fichier à modifier)
-- Offre client : `NEXT_PUBLIC_OFFER_TIER` dans `.env` (standard, expert, premium)
+- Offre client : `NEXT_PUBLIC_OFFER_TIER` dans `.env` (vitrine, standard, premium)
 - DB : `client_[prenom]_[secteur]` (isolée dans postgres-shared)
 
 ## Design tokens — workflow Figma → Code

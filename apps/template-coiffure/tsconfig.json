@@ -5,7 +5,9 @@
       "@/*": ["./src/*"]
     },
     "allowJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": [
     "next-env.d.ts",
