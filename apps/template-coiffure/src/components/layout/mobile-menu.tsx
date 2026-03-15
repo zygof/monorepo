@@ -17,7 +17,7 @@ interface MobileMenuProps {
 
 /**
  * Menu de navigation mobile — Client Component (état open/close).
- * S'adapte au tier : Standard masque les sections auth/booking.
+ * S'adapte au tier : Vitrine masque les sections auth/booking.
  */
 export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -122,7 +122,7 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
           {/* Séparateur */}
           <div className="my-2 h-px bg-border" aria-hidden="true" />
 
-          {/* Section auth — Expert+ uniquement */}
+          {/* Section auth — Standard+ uniquement */}
           {showAuth && <MobileMenuAuth onClose={close} />}
 
           {/* Séparateur */}
@@ -159,7 +159,7 @@ export function MobileMenu({ navLinks, bookingUrl, phone, phoneRaw }: MobileMenu
   );
 }
 
-// ── Sous-composant auth (Expert+) ────────────────────────────────────
+// ── Sous-composant auth (Standard+) ──────────────────────────────────
 // Isolé pour que useSession/signOut ne soient importés que quand l'auth est active.
 
 import { useSession, signOut } from 'next-auth/react';

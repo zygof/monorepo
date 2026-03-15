@@ -13,7 +13,7 @@ import { UserMenu } from './user-menu';
  * Server Component — l'interactivité est déléguée aux Client Components
  * (MobileMenu, UserMenu).
  *
- * S'adapte au tier : Standard masque le CTA booking et le UserMenu.
+ * S'adapte au tier : Vitrine masque le CTA booking et le UserMenu.
  */
 export function Header(): JSX.Element {
   const { name, contact, navLinks } = salonConfig;
@@ -52,7 +52,7 @@ export function Header(): JSX.Element {
             <span>{contact.phone}</span>
           </a>
 
-          {/* CTA principal — Réserver (Expert+) ou Nous Contacter (Standard) */}
+          {/* CTA principal — Réserver (Standard+) ou Nous Contacter (Vitrine) */}
           <Button
             asChild
             variant="secondary"
@@ -62,7 +62,7 @@ export function Header(): JSX.Element {
             <Link href={cta.href}>{cta.label}</Link>
           </Button>
 
-          {/* Compte utilisateur — Expert+ uniquement */}
+          {/* Compte utilisateur — Standard+ uniquement */}
           {showAuth && <UserMenu />}
 
           {/* Menu mobile */}

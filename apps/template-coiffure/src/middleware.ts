@@ -3,27 +3,27 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import type { OfferTier } from '@/lib/offers';
 
-const VALID_TIERS: OfferTier[] = ['standard', 'expert', 'premium'];
+const VALID_TIERS: OfferTier[] = ['vitrine', 'standard', 'premium'];
 
 function getTier(): OfferTier {
   const raw = process.env.NEXT_PUBLIC_OFFER_TIER;
   if (raw && VALID_TIERS.includes(raw as OfferTier)) return raw as OfferTier;
-  return 'expert';
+  return 'standard';
 }
 
 /**
  * Middleware d'authentification + filtrage par offre.
  *
- * Standard : bloque /reserver, /compte, /admin, /staff + APIs associées.
- * Expert+  : protège /compte (auth), /admin (ADMIN), /staff (EMPLOYEE|ADMIN).
+ * Vitrine   : bloque /reserver, /compte, /admin, /staff + APIs associées.
+ * Standard+ : protège /compte (auth), /admin (ADMIN), /staff (EMPLOYEE|ADMIN).
  */
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   const tier = getTier();
 
-  // ── Tier Standard : bloquer les routes Expert/Premium ──────────────
-  if (tier === 'standard') {
+  // ── Tier Vitrine : bloquer les routes Standard/Premium ─────────────
+  if (tier === 'vitrine') {
     const blockedPaths = ['/reserver', '/compte', '/admin', '/staff', '/reset-password'];
     const isBlocked =
       blockedPaths.some((p) => pathname.startsWith(p)) ||
@@ -47,7 +47,7 @@ export default auth((req) => {
     return undefined;
   }
 
-  // ── Expert / Premium : logique d'auth classique ────────────────────
+  // ── Standard / Premium : logique d'auth classique ──────────────────
   const isAuthenticated = !!req.auth;
 
   const protectedPaths = ['/compte', '/admin', '/staff'];

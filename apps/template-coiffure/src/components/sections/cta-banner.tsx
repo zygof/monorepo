@@ -6,7 +6,7 @@ import { hasBooking, getPrimaryCta } from '@/lib/offers';
 
 /**
  * Bandeau CTA — fond primary, titre, description, bouton gold.
- * Standard : incite au contact. Expert+ : incite à la réservation.
+ * Vitrine : incite au contact. Standard+ : incite à la réservation.
  */
 export function CtaBanner(): JSX.Element {
   const { ctaBanner } = salonConfig;

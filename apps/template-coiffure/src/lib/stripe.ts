@@ -2,7 +2,7 @@
  * Client Stripe côté serveur — initialisation lazy.
  *
  * Ne lève pas d'erreur si STRIPE_SECRET_KEY n'est pas définie,
- * ce qui permet aux tiers Standard/Expert de fonctionner sans Stripe.
+ * ce qui permet aux tiers Vitrine/Standard de fonctionner sans Stripe.
  */
 import Stripe from 'stripe';
 

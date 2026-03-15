@@ -1,55 +1,55 @@
 /**
  * Système de tiers MARRYNOV — détermine les fonctionnalités actives.
  *
- * Variable d'env : NEXT_PUBLIC_OFFER_TIER = 'standard' | 'expert' | 'premium'
+ * Variable d'env : NEXT_PUBLIC_OFFER_TIER = 'vitrine' | 'standard' | 'premium'
  *
- * Standard : site vitrine (présence digitale, prise de contact)
- * Expert   : Standard + réservation RDV, admin, staff, fidélisation, auth
- * Premium  : Expert + paiement en ligne (acompte Stripe à la réservation)
+ * Vitrine   : site vitrine (présence digitale, prise de contact)
+ * Standard  : Vitrine + réservation RDV, admin, staff, fidélisation, auth
+ * Premium   : Standard + paiement en ligne (acompte Stripe à la réservation)
  *
  * Pour upgrader un client : changer NEXT_PUBLIC_OFFER_TIER dans le .env → redeploy.
  */
 
-export type OfferTier = 'standard' | 'expert' | 'premium';
+export type OfferTier = 'vitrine' | 'standard' | 'premium';
 
-const VALID_TIERS: OfferTier[] = ['standard', 'expert', 'premium'];
+const VALID_TIERS: OfferTier[] = ['vitrine', 'standard', 'premium'];
 
 /**
- * Tier courant lu depuis l'env. Fallback : 'expert' (comportement actuel).
+ * Tier courant lu depuis l'env. Fallback : 'standard' (comportement actuel).
  */
 export function getOfferTier(): OfferTier {
   const raw = process.env.NEXT_PUBLIC_OFFER_TIER as string | undefined;
   if (raw && VALID_TIERS.includes(raw as OfferTier)) {
     return raw as OfferTier;
   }
-  return 'expert';
+  return 'standard';
 }
 
 // ── Feature flags dérivés du tier ───────────────────────────────────
 
 /** Réservation en ligne (booking wizard, calendrier, créneaux) */
 export function hasBooking(): boolean {
-  return getOfferTier() !== 'standard';
+  return getOfferTier() !== 'vitrine';
 }
 
 /** Système d'authentification (comptes clients, login/signup) */
 export function hasAuth(): boolean {
-  return getOfferTier() !== 'standard';
+  return getOfferTier() !== 'vitrine';
 }
 
 /** Espace admin (gestion services, RDV, équipe, galerie, etc.) */
 export function hasAdmin(): boolean {
-  return getOfferTier() !== 'standard';
+  return getOfferTier() !== 'vitrine';
 }
 
 /** Espace staff / styliste */
 export function hasStaff(): boolean {
-  return getOfferTier() !== 'standard';
+  return getOfferTier() !== 'vitrine';
 }
 
 /** Programme de fidélité */
 export function hasLoyalty(): boolean {
-  return getOfferTier() !== 'standard';
+  return getOfferTier() !== 'vitrine';
 }
 
 /** Paiement en ligne (acompte Stripe à la réservation) */
@@ -105,7 +105,7 @@ export function formatCentsToEuros(cents: number): string {
 
 // ── Navigation helpers ──────────────────────────────────────────────
 
-/** CTA principal du hero — contact pour Standard, réservation pour Expert+ */
+/** CTA principal du hero — contact pour Vitrine, réservation pour Standard+ */
 export function getPrimaryCta(): { label: string; href: string } {
   if (!hasBooking()) {
     return { label: 'Nous Contacter', href: '/contact' };

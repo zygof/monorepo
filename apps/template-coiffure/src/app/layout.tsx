@@ -1,9 +1,13 @@
 import type { ReactNode, JSX } from 'react';
 import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
-import { salonConfig } from '@/config/salon.config';
+import { GtmProvider, GtmNoScript } from '@marrynov/monitoring/gtm';
+import { ConsentBanner } from '@marrynov/monitoring/consent-banner';
+import { salonConfig, featuredServices } from '@/config/salon.config';
 import { Providers } from '@/components/providers';
 import './globals.css';
+
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID ?? '';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,9 +56,48 @@ export const metadata: Metadata = {
   },
 };
 
-/** JSON-LD — BeautySalon schema pour les moteurs de recherche */
+/** JSON-LD — BeautySalon schema enrichi pour les moteurs de recherche */
 function buildJsonLd() {
-  const { name, description, contact, stats, seo } = salonConfig;
+  const { name, description, contact, stats, seo, schedule } = salonConfig;
+
+  // Convertir les horaires en OpeningHoursSpecification
+  const dayMap: Record<string, string[]> = {
+    Lundi: ['Monday'],
+    Mardi: ['Tuesday'],
+    Mercredi: ['Wednesday'],
+    Jeudi: ['Thursday'],
+    Vendredi: ['Friday'],
+    Samedi: ['Saturday'],
+    Dimanche: ['Sunday'],
+    'Mardi - Vendredi': ['Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    'Lundi - Vendredi': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+  };
+
+  const openingHours = Object.entries(schedule)
+    .filter(([, hours]) => hours !== null)
+    .flatMap(([day, hours]) => {
+      const days = dayMap[day] ?? [];
+      const [opens, closes] = (hours as string).split(' - ').map((t) => t.trim());
+      return days.map((d) => ({
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: d,
+        opens,
+        closes,
+      }));
+    });
+
+  // Services proposés (featured)
+  const offeredServices = featuredServices.map((s) => ({
+    '@type': 'Service',
+    name: s.name,
+    description: s.description,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'EUR',
+      price: s.startingPrice.toString(),
+    },
+  }));
+
   return {
     '@context': 'https://schema.org',
     '@type': 'BeautySalon',
@@ -71,11 +114,25 @@ function buildJsonLd() {
       addressRegion: contact.region,
       addressCountry: 'FR',
     },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: '-20.8823',
+      longitude: '55.4504',
+    },
     aggregateRating: {
       '@type': 'AggregateRating',
       ratingValue: stats.rating.toString(),
       reviewCount: stats.reviewCount.toString(),
       bestRating: '5',
+    },
+    priceRange: '€€',
+    currenciesAccepted: 'EUR',
+    paymentAccepted: 'Cash, Credit Card',
+    openingHoursSpecification: openingHours,
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Nos prestations',
+      itemListElement: offeredServices,
     },
     sameAs: [contact.instagram, contact.facebook, contact.tiktok].filter(Boolean),
     image: `${seo.siteUrl}${seo.ogImageUrl}`,
@@ -90,8 +147,12 @@ export default function RootLayout({ children }: { children: ReactNode }): JSX.E
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd()) }}
         />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+        {GTM_ID && <GtmProvider gtmId={GTM_ID} />}
       </head>
       <body>
+        {GTM_ID && <GtmNoScript gtmId={GTM_ID} />}
         <Providers>
           {/* Skip link — accessibilité clavier */}
           <a
@@ -102,6 +163,7 @@ export default function RootLayout({ children }: { children: ReactNode }): JSX.E
           </a>
           {children}
         </Providers>
+        <ConsentBanner />
       </body>
     </html>
   );

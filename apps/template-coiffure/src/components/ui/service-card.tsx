@@ -72,7 +72,7 @@ export function ServiceCard({ service, bookingUrl, className }: ServiceCardProps
         </h3>
         <p className="mb-6 flex-1 text-base leading-relaxed text-text-subtle">{description}</p>
 
-        {/* CTA — Réserver (Expert+) ou Voir détails (Standard) */}
+        {/* CTA — Réserver (Standard+) ou Voir détails (Vitrine) */}
         <Button
           asChild
           variant={featured ? 'default' : 'outline'}

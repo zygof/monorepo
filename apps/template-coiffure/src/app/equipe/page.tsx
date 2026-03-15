@@ -206,7 +206,7 @@ export default function EquipePage(): JSX.Element {
                         ))}
                       </ul>
 
-                      {/* CTA — Réserver (Expert+) ou Contacter (Standard) */}
+                      {/* CTA — Réserver (Standard+) ou Contacter (Vitrine) */}
                       <Button
                         asChild
                         variant="outline"

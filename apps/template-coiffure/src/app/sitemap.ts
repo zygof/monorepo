@@ -56,7 +56,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // Expert+ : ajouter la page de réservation
+  // Standard+ : ajouter la page de réservation
   if (hasBooking()) {
     pages.push({
       url: `${base}/reserver`,

@@ -10,8 +10,8 @@ import { hasBooking, getPrimaryCta } from '@/lib/offers';
 /**
  * Hero Section — première section visible au chargement.
  * S'adapte au tier MARRYNOV :
- * - Standard : CTA → contact/téléphone, pas de bandeau urgence
- * - Expert+  : CTA → réservation, bandeau d'urgence disponibilités
+ * - Vitrine   : CTA → contact/téléphone, pas de bandeau urgence
+ * - Standard+ : CTA → réservation, bandeau d'urgence disponibilités
  */
 export function HeroSection(): JSX.Element {
   const { stats, servicesUrl, hero, contact } = salonConfig;
@@ -119,7 +119,7 @@ export function HeroSection(): JSX.Element {
               </Button>
             </div>
 
-            {/* Bandeau urgence — Expert+ uniquement */}
+            {/* Bandeau urgence — Standard+ uniquement */}
             {showBooking && (
               <div
                 className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface px-4 py-2 shadow-pill"
@@ -141,7 +141,7 @@ export function HeroSection(): JSX.Element {
               </div>
             )}
 
-            {/* Bandeau contact — Standard uniquement */}
+            {/* Bandeau contact — Vitrine uniquement */}
             {!showBooking && (
               <div className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface px-4 py-2 shadow-pill">
                 <Phone size={14} className="text-primary" aria-hidden="true" />
