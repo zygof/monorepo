@@ -24,16 +24,13 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ user, activeTab, onTabChange, onEditProfile }: ProfileHeaderProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
-      {/* Cover gradient */}
-      <div className="h-20 bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/5" />
-
+    <div className="overflow-hidden rounded-2xl border border-border shadow-card bg-linear-to-br from-primary/10 via-secondary/5 to-surface">
       {/* Profile info */}
-      <div className="relative px-6 pb-4 pt-0 sm:px-8">
-        {/* Avatar — overlaps cover */}
-        <div className="-mt-10 mb-4 flex items-end justify-between">
+      <div className="relative px-6 pb-4 pt-6 sm:px-8">
+        {/* Avatar + infos */}
+        <div className="mb-4 flex items-end justify-between">
           <div className="flex items-end gap-4">
-            <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-surface bg-primary-light shadow-card">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-primary-light shadow-card">
               {user.avatarUrl ? (
                 <Image
                   src={user.avatarUrl}
@@ -69,7 +66,7 @@ export function ProfileHeader({ user, activeTab, onTabChange, onEditProfile }: P
             variant="outline"
             size="sm"
             onClick={onEditProfile}
-            className="hidden gap-1.5 rounded-xl sm:inline-flex"
+            className="hidden cursor-pointer gap-1.5 rounded-xl sm:inline-flex"
           >
             <Pencil size={14} aria-hidden="true" />
             Modifier le profil
@@ -81,7 +78,7 @@ export function ProfileHeader({ user, activeTab, onTabChange, onEditProfile }: P
           variant="outline"
           size="sm"
           onClick={onEditProfile}
-          className="mb-4 w-full gap-1.5 rounded-xl sm:hidden"
+          className="mb-4 w-full cursor-pointer gap-1.5 rounded-xl sm:hidden"
         >
           <Pencil size={14} aria-hidden="true" />
           Modifier le profil
@@ -97,7 +94,7 @@ export function ProfileHeader({ user, activeTab, onTabChange, onEditProfile }: P
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
+                'flex shrink-0 cursor-pointer items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors',
                 activeTab === tab.id
                   ? 'border-primary text-primary'
                   : 'border-transparent text-text-muted hover:text-text hover:border-border',

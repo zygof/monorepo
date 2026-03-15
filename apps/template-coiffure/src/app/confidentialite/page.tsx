@@ -270,9 +270,11 @@ export default function ConfidentialitePage(): JSX.Element {
             {/* ── 8. Cookies ───────────────────────────────── */}
             <section className={SECTION_CLS}>
               <h2 className={H2_CLS}>8. Cookies</h2>
+
+              <h3 className={H3_CLS}>8.1 Cookies strictement nécessaires</h3>
               <p className={P_CLS}>
-                Notre site utilise uniquement des <strong>cookies strictement nécessaires</strong>{' '}
-                au fonctionnement du service :
+                Ces cookies sont indispensables au fonctionnement du site et ne nécessitent pas
+                votre consentement (article 82 de la loi Informatique et Libertés) :
               </p>
               <ul className={UL_CLS}>
                 <li>
@@ -280,18 +282,30 @@ export default function ConfidentialitePage(): JSX.Element {
                   navigation (expire à la fermeture du navigateur)
                 </li>
                 <li>
-                  <strong>Préférences :</strong> mémorisation de vos choix d&apos;affichage (durée :
-                  1 an)
+                  <strong>Préférences de consentement :</strong> mémorisation de vos choix
+                  concernant les cookies (durée : 1 an)
                 </li>
               </ul>
+
+              <h3 className={H3_CLS}>8.2 Cookies de mesure d&apos;audience</h3>
               <p className={P_CLS}>
-                Ces cookies techniques sont exemptés de consentement conformément à l&apos;article
-                82 de la loi Informatique et Libertés et aux recommandations de la CNIL.
+                Sous réserve de votre consentement explicite, nous utilisons Google Analytics 4 (via
+                Google Tag Manager) pour mesurer la fréquentation de notre site et améliorer nos
+                services. Ces cookies collectent des données anonymisées :
+              </p>
+              <ul className={UL_CLS}>
+                <li>Pages visitées, durée de session, parcours de navigation</li>
+                <li>Type d&apos;appareil, navigateur, zone géographique approximative</li>
+              </ul>
+              <p className={P_CLS}>
+                Conformément au mode Consent v2 de Google,{' '}
+                <strong>aucune donnée n&apos;est collectée avant votre acceptation</strong>. Vous
+                pouvez modifier votre choix à tout moment via le bandeau de consentement accessible
+                en bas de page.
               </p>
               <p className={P_CLS}>
-                Aucun cookie publicitaire, de mesure d&apos;audience tiers ou de pistage inter-sites
-                n&apos;est déposé. Si des cookies d&apos;analyse sont mis en place ultérieurement,
-                votre consentement explicite sera recueilli au préalable via un bandeau dédié.
+                Les données collectées sont hébergées par Google dans l&apos;Union Européenne et
+                conservées pendant 14 mois maximum, conformément aux recommandations de la CNIL.
               </p>
             </section>
 
@@ -332,7 +346,29 @@ export default function ConfidentialitePage(): JSX.Element {
                   affecter la licéité du traitement antérieur
                 </li>
               </ul>
-              <p className={P_CLS}>Pour exercer ces droits, contactez-nous :</p>
+              <p className={P_CLS}>
+                <strong>Exercez vos droits directement en ligne :</strong>
+              </p>
+              <ul className={UL_CLS}>
+                <li>
+                  <strong>Portabilité :</strong> depuis votre{' '}
+                  <Link href="/compte" className="text-primary hover:underline font-medium">
+                    espace client
+                  </Link>
+                  , cliquez sur « Exporter mes données » pour télécharger l&apos;ensemble de vos
+                  données au format JSON
+                </li>
+                <li>
+                  <strong>Effacement :</strong> depuis votre espace client, cliquez sur « Supprimer
+                  mon compte ». Vos données seront anonymisées et un email de confirmation vous sera
+                  envoyé
+                </li>
+                <li>
+                  <strong>Rectification :</strong> modifiez directement vos informations depuis
+                  l&apos;onglet « Profil » de votre espace client
+                </li>
+              </ul>
+              <p className={P_CLS}>Vous pouvez également nous contacter :</p>
               <ul className={UL_CLS}>
                 {contact.email && (
                   <li>

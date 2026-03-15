@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { db } from '@marrynov/database';
 import { auth } from '@/lib/auth';
 import { profileSchema } from '@/lib/validation';
+import { sendAccountDeletionConfirmation } from '@/lib/emails';
 
 /**
  * GET /api/me — Profil du client connecté.
@@ -38,10 +40,17 @@ export async function GET() {
   }
 }
 
+/** Schema pour la mise à jour d'avatar uniquement */
+const avatarSchema = z.object({
+  avatarUrl: z.string().url().nullable(),
+});
+
 /**
  * PATCH /api/me — Modifier le profil du client connecté.
  *
- * Body : { firstName, lastName, email, phone }
+ * Accepte deux types de body :
+ *   - Profil complet : { firstName, lastName, email, phone }
+ *   - Avatar seul : { avatarUrl: "https://..." | null }
  */
 export async function PATCH(request: Request) {
   try {
@@ -51,6 +60,24 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
+
+    // Déterminer le type de mise à jour
+    if ('avatarUrl' in body && Object.keys(body).length === 1) {
+      // Mise à jour avatar uniquement
+      const result = avatarSchema.safeParse(body);
+      if (!result.success) {
+        return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
+      }
+
+      const updated = await db.user.update({
+        where: { id: session.user.id },
+        data: { avatarUrl: result.data.avatarUrl },
+        select: { id: true, avatarUrl: true },
+      });
+      return NextResponse.json(updated);
+    }
+
+    // Mise à jour profil complet
     const result = profileSchema.safeParse(body);
 
     if (!result.success) {
@@ -114,6 +141,12 @@ export async function DELETE() {
       );
     }
 
+    // Récupérer les infos avant anonymisation (pour l'email de confirmation)
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { firstName: true, email: true },
+    });
+
     // Anonymiser les données liées plutôt que supprimer (RGPD + intégrité FK)
     await db.$transaction([
       db.user.update({
@@ -129,6 +162,15 @@ export async function DELETE() {
       }),
       db.account.deleteMany({ where: { userId: session.user.id } }),
     ]);
+
+    // Email de confirmation de suppression (non-bloquant)
+    if (user) {
+      sendAccountDeletionConfirmation({
+        firstName: user.firstName,
+        email: user.email,
+        salonName: process.env.NEXT_PUBLIC_SALON_NAME,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ message: 'Compte supprimé' });
   } catch (error) {

@@ -139,6 +139,8 @@ export default function CgvPage(): JSX.Element {
             {/* ── 4. Paiement ──────────────────────────────── */}
             <section className={SECTION_CLS}>
               <h2 className={H2_CLS}>4. Modalités de paiement</h2>
+
+              <h3 className={H3_CLS}>4.1 Paiement au salon</h3>
               <p className={P_CLS}>
                 Le paiement des prestations est exigible à la fin du service. Les moyens de paiement
                 acceptés sont :
@@ -148,6 +150,28 @@ export default function CgvPage(): JSX.Element {
                 <li>Espèces</li>
                 <li>Virement bancaire (sur demande, pour les forfaits mariage uniquement)</li>
               </ul>
+
+              <h3 className={H3_CLS}>4.2 Acompte en ligne</h3>
+              <p className={P_CLS}>
+                Selon la formule choisie par le Salon, un acompte peut être demandé lors de la
+                réservation en ligne. Cet acompte correspond à{' '}
+                <strong>30 % du montant estimé</strong> de la prestation (minimum 5,00 €) et est
+                encaissé au moment de la réservation via notre prestataire de paiement sécurisé
+                Stripe.
+              </p>
+              <p className={P_CLS}>
+                Le solde restant est réglé au salon à l&apos;issue de la prestation. En cas
+                d&apos;annulation par le Client dans le délai prévu (24 heures avant le
+                rendez-vous), l&apos;acompte est intégralement remboursé. Au-delà de ce délai,
+                l&apos;acompte reste acquis au Salon.
+              </p>
+              <p className={P_CLS}>
+                Les données bancaires sont traitées directement par Stripe et ne sont{' '}
+                <strong>jamais stockées</strong> sur nos serveurs. Les transactions sont sécurisées
+                par chiffrement SSL/TLS et authentification 3D Secure.
+              </p>
+
+              <h3 className={H3_CLS}>4.3 Forfaits mariage et événements</h3>
               <p className={P_CLS}>
                 Pour les prestations mariage et événements spéciaux, un acompte de{' '}
                 <strong>30 %</strong> du montant total est demandé à la confirmation. Cet acompte

@@ -164,10 +164,13 @@ export default function MentionsLegalesPage(): JSX.Element {
                 .
               </p>
               <p className={P_CLS}>
-                Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi
-                Informatique et Libertés, vous disposez d&apos;un droit d&apos;accès, de
-                rectification, de suppression et de portabilité de vos données. Vous pouvez exercer
-                ces droits en nous contactant à l&apos;adresse{' '}
+                Conformément au RGPD et à la loi Informatique et Libertés, vous disposez d&apos;un
+                droit d&apos;accès, de rectification, de suppression et de portabilité de vos
+                données. Vous pouvez exercer ces droits directement depuis votre{' '}
+                <Link href="/compte" className="text-primary hover:underline font-medium">
+                  espace client
+                </Link>{' '}
+                (export de données, suppression de compte) ou en nous contactant à l&apos;adresse{' '}
                 {contact.email ? (
                   <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
                     {contact.email}
@@ -183,16 +186,23 @@ export default function MentionsLegalesPage(): JSX.Element {
             <section className={SECTION_CLS}>
               <h2 className={H2_CLS}>6. Cookies</h2>
               <p className={P_CLS}>
-                Le site utilise uniquement des cookies strictement nécessaires au bon fonctionnement
-                du service (cookies de session, préférences d&apos;affichage). Ces cookies
-                techniques ne nécessitent pas votre consentement préalable conformément à la
-                réglementation CNIL.
+                Le site utilise des cookies strictement nécessaires au fonctionnement du service
+                (session, préférences de consentement) qui ne nécessitent pas votre accord
+                préalable.
               </p>
               <p className={P_CLS}>
-                Aucun cookie publicitaire ou de mesure d&apos;audience tiers n&apos;est déposé sans
-                votre consentement explicite. Si des cookies d&apos;analyse sont mis en place
-                ultérieurement, un bandeau de consentement vous sera présenté conformément aux
-                recommandations de la CNIL.
+                Des cookies de mesure d&apos;audience (Google Analytics 4 via Google Tag Manager)
+                peuvent être déposés <strong>uniquement après votre consentement explicite</strong>,
+                recueilli via un bandeau conforme aux recommandations de la CNIL (Consent Mode v2).
+                Aucune donnée n&apos;est collectée tant que vous n&apos;avez pas accepté.
+              </p>
+              <p className={P_CLS}>
+                Vous pouvez modifier vos choix à tout moment via le bandeau de consentement. Pour
+                plus de détails, consultez notre{' '}
+                <Link href="/confidentialite" className="text-primary hover:underline font-medium">
+                  Politique de Confidentialité
+                </Link>
+                .
               </p>
             </section>
 
