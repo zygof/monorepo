@@ -2,7 +2,7 @@
 
 import { useReducer, useState, useCallback } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, CreditCard, Loader2 } from 'lucide-react';
-import { Button, cn } from '@marrynov/ui';
+import { Button, cn, toast } from '@marrynov/ui';
 import type {
   BookingState,
   BookingAction,
@@ -191,11 +191,16 @@ export function BookingWizard({
         dispatch({ type: 'SET_PAYMENT_INFO', info: paymentInfo });
         dispatch({ type: 'GO_NEXT' }); // step 3 → step 4
       } else {
-        // Expert : booking confirmé directement
+        // Standard : booking confirmé directement
+        toast.success('Rendez-vous confirmé !', {
+          description: 'Vous recevrez un email de confirmation.',
+        });
         dispatch({ type: 'CONFIRM' }); // → 'confirmed'
       }
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Erreur inconnue');
+      const message = err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error('Impossible de réserver', { description: message });
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }

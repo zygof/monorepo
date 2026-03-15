@@ -62,8 +62,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
+    // Toujours retourner 200 pour éviter que Stripe renvoie en boucle.
+    // L'erreur est loggée pour investigation manuelle.
     console.error(`[Webhook Stripe] Erreur traitement ${event.type}:`, err);
-    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 });
+    return NextResponse.json({ received: true, error: 'internal' });
   }
 }
 
@@ -189,9 +191,9 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     select: { id: true, depositAmount: true },
   });
 
-  if (!appointment) return;
+  if (!appointment || !appointment.depositAmount) return;
 
-  const isFullRefund = charge.amount_refunded >= (appointment.depositAmount ?? 0);
+  const isFullRefund = charge.amount_refunded >= appointment.depositAmount;
 
   await db.appointment.update({
     where: { id: appointment.id },

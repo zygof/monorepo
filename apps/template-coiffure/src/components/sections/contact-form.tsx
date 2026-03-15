@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { cn, Button } from '@marrynov/ui';
+import { cn, Button, toast } from '@marrynov/ui';
 import { Send, CheckCircle } from 'lucide-react';
 import { contactFormSchema, type ContactFormData } from '@/lib/validation';
 
@@ -27,7 +27,7 @@ interface ContactFormProps {
  * Formulaire de contact — Client Component.
  *
  * Validation côté client avec react-hook-form + zod.
- * TODO (backend) : POST /api/contact → envoyer via Resend.
+ * Envoie via POST /api/contact (Resend).
  */
 export function ContactForm({ heading, description }: ContactFormProps) {
   const [submitted, setSubmitted] = useState(false);
@@ -42,11 +42,28 @@ export function ContactForm({ heading, description }: ContactFormProps) {
     defaultValues: { name: '', email: '', phone: '', subject: '', message: '' },
   });
 
-  async function onSubmit(_data: ContactFormData) {
-    // TODO (backend) : POST /api/contact → envoyer via Resend
-    // _data est validé et normalisé par zod (email lowercase, phone nettoyé)
-    await new Promise((r) => setTimeout(r, 800));
-    setSubmitted(true);
+  async function onSubmit(data: ContactFormData) {
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error ?? "Erreur lors de l'envoi");
+      }
+
+      setSubmitted(true);
+      toast.success('Message envoyé !', {
+        description: 'Nous vous répondrons dans les plus brefs délais.',
+      });
+    } catch (err) {
+      toast.error("Impossible d'envoyer le message", {
+        description: err instanceof Error ? err.message : 'Veuillez réessayer.',
+      });
+    }
   }
 
   if (submitted) {

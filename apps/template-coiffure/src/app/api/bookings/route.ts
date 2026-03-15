@@ -113,9 +113,26 @@ export async function POST(request: Request) {
     const totalPrice = services.reduce((sum, s) => sum + s.startingPrice, 0);
     const totalDuration = services.reduce((sum, s) => sum + s.durationMin, 0);
 
+    // Vérifier que la date n'est pas dans le passé
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const appointmentDate = new Date(data.date + 'T00:00:00');
+    if (appointmentDate < today) {
+      return NextResponse.json({ error: 'Impossible de réserver dans le passé' }, { status: 400 });
+    }
+
     // Calculer endTime
     const [startH, startM] = data.startTime.split(':').map(Number);
     const endMinutes = (startH ?? 0) * 60 + (startM ?? 0) + totalDuration;
+
+    // Vérifier que le RDV ne dépasse pas minuit
+    if (endMinutes > 23 * 60 + 59) {
+      return NextResponse.json(
+        { error: "Le rendez-vous dépasse les horaires d'ouverture" },
+        { status: 400 },
+      );
+    }
+
     const endTime = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
 
     // Vérifier que le stylistId est bien un employé/admin
@@ -296,7 +313,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── Expert : confirmation directe (pas de paiement) ──────────────
+    // ── Standard : confirmation directe (pas de paiement) ────────────
     staffEventBus.emit('appointment_created', { appointmentId: appointment.id });
 
     await sendBookingConfirmation({

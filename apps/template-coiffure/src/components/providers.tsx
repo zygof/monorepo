@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback } from 'react';
 import { SessionProvider } from 'next-auth/react';
+import { Toaster } from '@marrynov/ui';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { hasAuth } from '@/lib/offers';
 
@@ -27,8 +28,8 @@ export function useAuthModal() {
 
 /**
  * Providers racine — s'adapte au tier MARRYNOV.
- * Standard : pas de SessionProvider ni AuthModal (pas d'auth).
- * Expert+  : SessionProvider + AuthModal.
+ * Vitrine   : pas de SessionProvider ni AuthModal (pas d'auth).
+ * Standard+ : SessionProvider + AuthModal.
  */
 export function Providers({ children }: { children: React.ReactNode }) {
   const authEnabled = hasAuth();
@@ -48,11 +49,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setAuthOpen(false);
   }, []);
 
-  // Standard : pas d'auth, wrapper minimal
+  // Vitrine : pas d'auth, wrapper minimal
   if (!authEnabled) {
     return (
       <AuthModalContext.Provider value={{ openAuth, closeAuth }}>
         {children}
+        <Toaster />
       </AuthModalContext.Provider>
     );
   }
@@ -62,6 +64,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AuthModalContext.Provider value={{ openAuth, closeAuth }}>
         {children}
         <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultView={authView} />
+        <Toaster />
       </AuthModalContext.Provider>
     </SessionProvider>
   );

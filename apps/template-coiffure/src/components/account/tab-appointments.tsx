@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogDescription,
   cn,
+  toast,
 } from '@marrynov/ui';
 import type { Appointment, AppointmentStatus, TeamMember } from '@/types/salon';
 import { ReviewForm } from './review-form';
@@ -125,10 +126,15 @@ function AppointmentCard({ appointment, teamMembers, isPast, salonPhone }: Appoi
     setLoading(false);
     if (res.ok) {
       setSuccess('Rendez-vous annulé');
+      toast.success('Rendez-vous annulé', {
+        description: 'Un email de confirmation vous a été envoyé.',
+      });
       setTimeout(() => {
         setCancelOpen(false);
         router.refresh();
       }, 1200);
+    } else {
+      toast.error("Impossible d'annuler le rendez-vous");
     }
   }
 
@@ -142,10 +148,15 @@ function AppointmentCard({ appointment, teamMembers, isPast, salonPhone }: Appoi
     setLoading(false);
     if (res.ok) {
       setSuccess('Demande de report envoyée au salon');
+      toast.success('Demande envoyée', {
+        description: 'Le salon vous recontactera pour un nouveau créneau.',
+      });
       setTimeout(() => {
         setRescheduleOpen(false);
         setSuccess('');
       }, 2000);
+    } else {
+      toast.error("Impossible d'envoyer la demande de report");
     }
   }
 

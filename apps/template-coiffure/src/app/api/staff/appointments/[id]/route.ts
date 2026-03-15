@@ -24,7 +24,7 @@ const updateSchema = z.object({
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { error } = await requireStaff();
+    const { error, session } = await requireStaff();
     if (error) return error;
 
     const { id } = await params;
@@ -42,11 +42,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const appointment = await db.appointment.findUnique({
       where: { id },
-      select: { id: true, clientId: true, status: true },
+      select: { id: true, clientId: true, status: true, stylistId: true },
     });
 
     if (!appointment) {
       return NextResponse.json({ error: 'RDV introuvable' }, { status: 404 });
+    }
+
+    // Un employé ne peut modifier que ses propres RDV (ADMIN peut tout modifier)
+    if (session!.user.role === 'EMPLOYEE' && appointment.stylistId !== session!.user.id) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
     }
 
     // Construire les données de mise à jour

@@ -14,6 +14,7 @@ import {
   DialogTitle,
   Input,
   cn,
+  toast,
 } from '@marrynov/ui';
 
 /* ── Zod schemas (partagés depuis lib/validation) ────────────────────── */
@@ -203,9 +204,11 @@ function LoginView({
 
     if (res?.error) {
       setGlobalError('Email ou mot de passe incorrect');
+      toast.error('Connexion échouée', { description: 'Email ou mot de passe incorrect.' });
       return;
     }
 
+    toast.success('Connexion réussie !');
     onSuccess({ email: data.email, firstName: '', lastName: '' });
   }
 
@@ -336,7 +339,9 @@ function SignupView({
 
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      setGlobalError(body?.error ?? 'Une erreur est survenue');
+      const errorMsg = body?.error ?? 'Une erreur est survenue';
+      setGlobalError(errorMsg);
+      toast.error('Inscription échouée', { description: errorMsg });
       return;
     }
 
@@ -349,9 +354,13 @@ function SignupView({
 
     if (signInRes?.error) {
       setGlobalError('Compte créé mais connexion échouée. Essayez de vous connecter.');
+      toast.error('Connexion automatique échouée', {
+        description: 'Votre compte a été créé. Connectez-vous manuellement.',
+      });
       return;
     }
 
+    toast.success('Bienvenue !', { description: 'Votre compte a été créé avec succès.' });
     onSuccess({ email: data.email, firstName: data.firstName, lastName: data.lastName });
   }
 

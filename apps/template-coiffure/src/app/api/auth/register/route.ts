@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs';
 import { db } from '@marrynov/database';
 import { signupSchema } from '@/lib/validation';
 import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
+import { sendWelcomeEmail } from '@/lib/emails';
 
 const limiter = createRateLimiter('auth-register', { limit: 5, windowSeconds: 60 });
 
@@ -59,6 +60,14 @@ export async function POST(request: Request) {
         lastName: true,
       },
     });
+
+    // Email de bienvenue (non-bloquant)
+    sendWelcomeEmail({
+      firstName,
+      email,
+      salonName: process.env.NEXT_PUBLIC_SALON_NAME,
+      salonUrl: process.env.NEXT_PUBLIC_APP_URL,
+    }).catch(() => {});
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {

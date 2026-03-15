@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '@marrynov/database';
 import { auth } from '@/lib/auth';
 import { staffEventBus } from '@/lib/event-bus';
+import { sendBookingCancellation } from '@/lib/emails';
 
 const clientAppointmentSchema = z.discriminatedUnion('action', [
   z.object({
@@ -88,6 +89,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           },
         },
       });
+
+      // Email d'annulation au client (non-bloquant)
+      sendBookingCancellation({
+        clientFirstName: session.user.firstName ?? '',
+        clientEmail: session.user.email!,
+        date: appointment.date,
+        startTime: appointment.startTime,
+        salonName: process.env.NEXT_PUBLIC_SALON_NAME,
+      }).catch(() => {});
 
       staffEventBus.emit('appointment_cancelled', { appointmentId: id });
       return NextResponse.json(updated);

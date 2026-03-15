@@ -2,14 +2,27 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { db } from '@marrynov/database';
 import { resetPasswordSchema } from '@/lib/validation';
+import { createRateLimiter, getClientIp } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/reset-password — Réinitialisation du mot de passe.
  *
  * Valide le token + email, met à jour le passwordHash, supprime le token.
+ * Rate limité : 5 tentatives / 5 minutes (protection brute-force token).
  */
+
+const resetLimiter = createRateLimiter('auth-reset-password', { limit: 5, windowSeconds: 300 });
+
 export async function POST(request: Request) {
   try {
+    const { success } = resetLimiter.check(getClientIp(request));
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Trop de tentatives. Réessayez dans quelques minutes.' },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     const result = resetPasswordSchema.safeParse(body);
 

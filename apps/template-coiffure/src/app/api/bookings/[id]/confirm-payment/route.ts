@@ -64,6 +64,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       });
     }
 
+    // Vérifier que le RDV a bien un acompte attendu
+    if (!appointment.depositAmount) {
+      return NextResponse.json(
+        { error: 'Ce rendez-vous ne nécessite pas de paiement' },
+        { status: 400 },
+      );
+    }
+
     // Vérifier que le PaymentIntent correspond
     if (appointment.stripePaymentIntentId !== paymentIntentId) {
       return NextResponse.json({ error: 'PaymentIntent ne correspond pas' }, { status: 400 });
